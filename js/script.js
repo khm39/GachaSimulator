@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game Configurations ---
     const gameConfigs = {
-        fgo: {
+        game_a: { // fgo
             name: '運命召喚',
             ssrRate: 0.01,
             srRate: 0.03,
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pityType: 'direct',
             pityDesc: '330回以内にPU対象の最高レアが1つ確定。',
         },
-        genshin: {
+        game_b: { // genshin
             name: '七神の国',
             ssrRate: 0.006,
             srRate: 0.051,
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '90回で最高レアが確定。74回から確率上昇。すり抜けたら次回最高レアはPU確定。',
         },
-        uma: {
+        game_c: { // uma
             name: '駿馬むすめ',
             ssrRate: 0.03,
             srRate: 0.18,
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
         },
-        priconne: {
+        game_d: { // priconne
             name: '姫君との絆',
             ssrRate: 0.025,
             srRate: 0.18,
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
         },
-        arknights: {
+        game_e: { // arknights
             name: '明日への方舟',
             ssrRate: 0.02,
             srRate: 0.08,
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '300回で交換可能。51回目から最高レアの確率が2%ずつ上昇。',
         },
-        granblue: {
+        game_f: { // granblue
             name: '蒼き幻想',
             ssrRate: 0.03,
             srRate: 0.15,
@@ -83,10 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Functions ---
 
-    /**
-     * Initializes or resets the simulation for a given game.
-     * @param {string} gameId - The ID of the game to initialize.
-     */
     function initializeSimulation(gameId) {
         const config = gameConfigs[gameId];
 
@@ -94,9 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
             game: gameId,
             config: config,
             totalDraws: 0,
-            pityCount: 0, // Counts since last SSR for direct pity systems
+            pityCount: 0,
             exchangePoints: 0,
-            isGuaranteedPu: false, // For Genshin's specific guarantee mechanic
+            isGuaranteedPu: false,
         };
 
         resultsDisplay.innerHTML = '';
@@ -104,48 +100,40 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStatusUI();
     }
 
-    /**
-     * Updates the entire status display based on the current state.
-     */
     function updateStatusUI() {
         const { config, totalDraws, pityCount, exchangePoints, isGuaranteedPu, game } = state;
 
         totalDrawsEl.innerHTML = `<strong>合計回数:</strong> ${totalDraws}`;
 
-        // Hide all optional status fields by default, then show them as needed
         pityCounterEl.parentElement.style.display = 'none';
         exchangePointsLi.style.display = 'none';
         genshinGuaranteeLi.style.display = 'none';
 
-        if (config.pityType === 'direct') { // FGO, Genshin
+        if (config.pityType === 'direct') {
             pityCounterEl.innerHTML = `<strong>天井カウント:</strong> ${pityCount} / ${config.pity}`;
             pityCounterEl.parentElement.style.display = 'block';
         }
 
-        if (config.pityType === 'exchange') { // Uma, Priconne, Arknights, Granblue
+        if (config.pityType === 'exchange') {
             exchangePointsEl.innerHTML = `<strong>${config.pointName}:</strong> ${exchangePoints} / ${config.pity}`;
             exchangePointsLi.style.display = 'block';
         }
 
-        if (game === 'arknights') {
-            pityCounterEl.innerHTML = `<strong>前回星6からの回数:</strong> ${pityCount}`;
+        if (game === 'game_e') { // arknights
+            pityCounterEl.innerHTML = `<strong>前回最高レアからの回数:</strong> ${pityCount}`;
             pityCounterEl.parentElement.style.display = 'block';
         }
 
-        if (game === 'genshin') {
+        if (game === 'game_b') { // genshin
             genshinGuaranteeEl.innerHTML = `<strong>次回PU確定:</strong> ${isGuaranteedPu ? 'はい' : 'いいえ'}`;
             genshinGuaranteeLi.style.display = 'block';
         }
     }
 
-    /**
-     * Creates the HTML for a single gacha result card.
-     * @param {object} result - The result object from drawOnce.
-     */
     function createResultCard(result) {
         const { rarity, isPu, guaranteed } = result;
         const card = document.createElement('div');
-        card.className = 'card result-card text-center h-100'; // h-100 for equal height
+        card.className = 'card result-card text-center h-100';
 
         const cardBody = document.createElement('div');
         cardBody.className = 'card-body p-2 d-flex flex-column justify-content-center';
@@ -165,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (guaranteed) {
             const pityBadge = document.createElement('span');
             pityBadge.className = 'badge bg-info text-dark position-absolute top-0 end-0 m-1';
-            pityBadge.textContent = '天井'; // Pity
+            pityBadge.textContent = '天井';
             card.appendChild(pityBadge);
         }
 
@@ -179,17 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return wrapper;
     }
 
-    /**
-     * Performs a single gacha draw based on the current game's rules.
-     * @returns {object} An object representing the result.
-     */
     function drawOnce() {
         state.totalDraws++;
         const { config, game } = state;
         let result = { rarity: 'R', isPu: false, guaranteed: false };
 
-        if (game === 'fgo') {
-            state.pityCount++; // Counts towards 330 guarantee
+        if (game === 'game_a') { // fgo
+            state.pityCount++;
             if (state.pityCount === config.pity) {
                 result = { rarity: 'SSR', isPu: true, guaranteed: true };
                 state.pityCount = 0;
@@ -206,12 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 result = { rarity: 'SR' };
             }
 
-        } else if (game === 'genshin') {
+        } else if (game === 'game_b') { // genshin
             state.pityCount++;
             let currentSsrRate = config.ssrRate;
 
             if (state.pityCount >= config.softPityStart) {
-                // Linear increase model to guarantee SSR at pity
                 currentSsrRate += (1 - config.ssrRate) / (config.pity - config.softPityStart + 1);
             }
             if (state.pityCount === config.pity) {
@@ -233,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 result = { rarity: 'SR' };
             }
 
-        } else if (game === 'arknights') {
+        } else if (game === 'game_e') { // arknights
             state.exchangePoints++;
             state.pityCount++;
             let currentSsrRate = config.ssrRate;
@@ -250,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 result = { rarity: 'SR' };
             }
 
-        } else { // Standard Exchange Games (Uma, Priconne, Granblue)
+        } else { // Standard Exchange Games (game_c, game_d, game_f)
             state.exchangePoints++;
             const rand = Math.random();
             if (rand < config.ssrRate) {
@@ -263,10 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return result;
     }
 
-    /**
-     * Main function to handle drawing gacha.
-     * @param {number} count - The number of draws to perform.
-     */
     function handleDraw(count) {
         if (!state.config) return;
 
@@ -276,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
             currentResults.push(result);
         }
 
-        // Render results to the screen, prepending new ones
         currentResults.reverse().forEach(result => {
             const cardElement = createResultCard(result);
             resultsDisplay.prepend(cardElement);
