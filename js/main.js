@@ -1,81 +1,64 @@
-import { updateView, resetView } from './ui.js';
+import { renderApp } from './ui.js';
+import { updateChildren, createElement } from './vdom.js';
 import * as gameService from './gameService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- App Root ---
+    const appRoot = document.getElementById('app');
+
     // --- State ---
     let state = {};
+    let vApp = null; // To hold the VDOM tree
 
-    // --- DOM Elements (Controls) ---
-    const gameSelect = document.getElementById('game-select');
-    const draw1Btn = document.getElementById('draw-1-btn');
-    const draw10Btn = document.getElementById('draw-10-btn');
-    const resetBtn = document.getElementById('reset-btn');
-    const descriptionText = document.getElementById('description');
-
-    // Custom settings elements
-    const customSettingsEl = document.getElementById('custom-settings');
-    const customSsrRateEl = document.getElementById('custom-ssr-rate');
-    const customSrRateEl = document.getElementById('custom-sr-rate');
-    const customPityTypeEl = document.getElementById('custom-pity-type');
-    const customPityCountEl = document.getElementById('custom-pity-count');
+    // --- Actions (logic to update state) ---
+    const actions = {
+        selectGame: (e) => {
+            initializeSimulation(e.target.value);
+        },
+        draw1: () => {
+            handleDraw(1);
+        },
+        draw10: () => {
+            handleDraw(10);
+        },
+        reset: () => {
+            initializeSimulation(state.game);
+        },
+    };
 
     // --- Functions ---
-    function populateGameSelect() {
+
+    function render() {
         const allGames = gameService.getAllGames();
-        allGames.forEach(game => {
-            const option = document.createElement('option');
-            option.value = game.id;
-            option.textContent = game.name;
-            gameSelect.appendChild(option);
-        });
+        const newVApp = renderApp(state, actions, allGames);
+        updateChildren(appRoot, newVApp.children, vApp ? vApp.children : []);
+        vApp = newVApp;
     }
 
     function initializeSimulation(gameId) {
         let baseConfig = gameService.getGame(gameId);
-        if (!baseConfig) {
-            console.error(`Configuration not found for gameId: ${gameId}`);
-            return;
-        }
-
-        let finalConfig = { ...baseConfig };
-
-        if (gameId === 'custom') {
-            customSettingsEl.classList.remove('hidden');
-            finalConfig = {
-                ...finalConfig,
-                ssrRate: parseFloat(customSsrRateEl.value) / 100,
-                srRate: parseFloat(customSrRateEl.value) / 100,
-                pityType: customPityTypeEl.value,
-                pity: parseInt(customPityCountEl.value, 10),
-            };
-        } else {
-            customSettingsEl.classList.add('hidden');
-        }
+        if (!baseConfig) return;
 
         state = {
             game: gameId,
-            config: finalConfig,
+            config: { ...baseConfig },
             totalDraws: 0,
             pityCount: 0,
             exchangePoints: 0,
             isGuaranteedPu: false,
             results: [],
+            nextResultId: 0,
         };
-
-        descriptionText.textContent = finalConfig.pityDesc;
-        resetView();
-        updateView(state);
+        render();
     }
 
     function drawOnce() {
         state.totalDraws++;
-        // The actual draw logic will be handled by the game module.
-        const game = state.config; // The config now holds the full game module
+        const game = state.config;
         if (game && typeof game.draw === 'function') {
             return game.draw(state, game);
         }
-        console.error("No draw function found for the current game.");
-        return { rarity: 'ERROR' };
+        return { rarity: 'ERROR', id: state.nextResultId++ };
     }
 
     function handleDraw(count) {
@@ -84,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentResults = [];
         for (let i = 0; i < count; i++) {
             const result = drawOnce();
+            result.id = state.nextResultId++;
             currentResults.push(result);
         }
 
@@ -98,38 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         state.results.push(...currentResults);
-        updateView(state);
+        render(); // Re-render the app with the new state
     }
 
-    // --- Event Listeners ---
-    gameSelect.addEventListener('change', (e) => {
-        initializeSimulation(e.target.value);
-    });
-
-    draw1Btn.addEventListener('click', () => {
-        handleDraw(1);
-    });
-
-    draw10Btn.addEventListener('click', () => {
-        handleDraw(10);
-    });
-
-    resetBtn.addEventListener('click', () => {
-        initializeSimulation(gameSelect.value);
-    });
-
-    // Listen for changes on custom inputs and re-initialize
-    [customSsrRateEl, customSrRateEl, customPityTypeEl, customPityCountEl].forEach(el => {
-        el.addEventListener('change', () => {
-            if (gameSelect.value === 'custom') {
-                initializeSimulation('custom');
-            }
-        });
-    });
-
     // --- Initial Load ---
-    populateGameSelect();
-    if (gameSelect.value) {
-        initializeSimulation(gameSelect.value);
+    const initialGameId = gameService.getAllGames()[0]?.id;
+    if (initialGameId) {
+        initializeSimulation(initialGameId);
+    } else {
+        appRoot.textContent = 'No games configured.';
     }
 });
