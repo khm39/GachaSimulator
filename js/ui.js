@@ -41,9 +41,7 @@ function renderCustomSettings(state, actions) {
         { value: 'none', text: 'なし', selected: state.customPityType === 'none' },
     ];
 
-    return h('div', { id: 'custom-settings', class: 'mb-3' }, [
-        h('hr', {}, []),
-        h('h6', { class: 'mb-3' }, ['カスタム設定']),
+    return h('div', { id: 'custom-settings', class: 'mb-3 pt-3 border-top' }, [
         InputGroup({ id: 'custom-ssr-rate', label: 'SSR確率 (%):' }, [
             Input({ type: 'number', id: 'custom-ssr-rate', name: 'customSsrRate', value: state.customSsrRate, step: 0.1, onchange: actions.updateCustomSetting })
         ]),
