@@ -25,17 +25,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Game Configurations ---
     const gameConfigs = [
         {
-            id: 'game_a', // fgo
-            name: '運命召喚',
+            id: 'game_a',
+            name: 'ゲームA',
             ssrRate: 0.01,
             srRate: 0.03,
             pity: 330,
             pityType: 'direct',
             pityDesc: '330回以内にPU対象の最高レアが1つ確定。',
+            has10PullGuarantee: true,
+            puSsrRate: 0.008, // PU対象のSSR排出率
         },
         {
-            id: 'game_b', // genshin
-            name: '七神の国',
+            id: 'game_b',
+            name: 'ゲームB',
             ssrRate: 0.006,
             srRate: 0.051,
             pity: 90,
@@ -45,8 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pityDesc: '90回で最高レアが確定。74回から確率上昇。すり抜けたら次回最高レアはPU確定。',
         },
         {
-            id: 'game_c', // uma
-            name: '駿馬むすめ',
+            id: 'game_c',
+            name: 'ゲームC',
             ssrRate: 0.03,
             srRate: 0.18,
             pity: 200,
@@ -54,10 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
             pointName: '交換Pt',
             puRate: 0.5,
             pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
+            has10PullGuarantee: true,
         },
         {
-            id: 'game_d', // priconne
-            name: '姫君との絆',
+            id: 'game_d',
+            name: 'ゲームD',
             ssrRate: 0.025,
             srRate: 0.18,
             pity: 200,
@@ -65,10 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
             pointName: '交換Pt',
             puRate: 0.5,
             pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
+            has10PullGuarantee: true,
         },
         {
-            id: 'game_e', // arknights
-            name: '明日への方舟',
+            id: 'game_e',
+            name: 'ゲームE',
             ssrRate: 0.02,
             srRate: 0.08,
             pity: 300,
@@ -79,8 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pityDesc: '300回で交換可能。51回目から最高レアの確率が2%ずつ上昇。',
         },
         {
-            id: 'game_f', // granblue
-            name: '蒼き幻想',
+            id: 'game_f',
+            name: 'ゲームF',
             ssrRate: 0.03,
             srRate: 0.15,
             pity: 300,
@@ -88,18 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
             pointName: '交換Pt',
             puRate: 0.5,
             pityDesc: '300回引くと「交換Pt」が300貯まり、PU対象などと交換可能。',
+            has10PullGuarantee: true,
         },
-        custom: {
-            name: 'カスタム',
-            ssrRate: 0.03,
-            srRate: 0.15,
-            pity: 200,
-            pityType: 'exchange',
-            pointName: '交換Pt',
-            puRate: 0.5, // Default PU rate
-            pityDesc: 'カスタム設定でシミュレーションします。',
-        },
-        dynamicRate: {
+        {
+            id: 'dynamic_rate',
             name: '確率変動ガチャ',
             ssrRate: 0.01, // Base rate
             srRate: 0.10,
@@ -114,6 +110,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 { after: 50, ssrRate: 0.20 },
                 { after: 90, ssrRate: 0.50 }
             ]
+        },
+        {
+            id: 'custom',
+            name: 'カスタム',
+            ssrRate: 0.03,
+            srRate: 0.15,
+            pity: 200,
+            pityType: 'exchange',
+            pointName: '交換Pt',
+            puRate: 0.5,
+            pityDesc: 'カスタム設定でシミュレーションします。',
         }
     ];
 
@@ -132,14 +139,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeSimulation(gameId) {
-        let config;
+        let baseConfig = gameConfigs.find(g => g.id === gameId);
+        if (!baseConfig) {
+            console.error(`Configuration not found for gameId: ${gameId}`);
+            return;
+        }
 
-        // Show/hide custom settings panel
+        let finalConfig = { ...baseConfig };
+
         if (gameId === 'custom') {
             customSettingsEl.classList.remove('hidden');
-            // Build config from custom UI inputs
-            config = {
-                ...gameConfigs.custom, // Start with defaults
+            finalConfig = {
+                ...finalConfig,
                 ssrRate: parseFloat(customSsrRateEl.value) / 100,
                 srRate: parseFloat(customSrRateEl.value) / 100,
                 pityType: customPityTypeEl.value,
@@ -147,26 +158,20 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         } else {
             customSettingsEl.classList.add('hidden');
-            config = gameConfigs[gameId];
-        }
-
-        const config = gameConfigs.find(g => g.id === gameId);
-        if (!config) {
-            console.error(`Configuration not found for gameId: ${gameId}`);
-            return;
         }
 
         state = {
             game: gameId,
-            config: config,
+            config: finalConfig,
             totalDraws: 0,
             pityCount: 0,
             exchangePoints: 0,
-            isGuaranteedPu: false,
+            isGuaranteedPu: false, // For game_b
+            ssrCountSinceLastSr: 0, // For specific game logic if needed
         };
 
         resultsDisplay.innerHTML = '';
-        descriptionText.textContent = config.pityDesc;
+        descriptionText.textContent = finalConfig.pityDesc;
         updateStatusUI();
     }
 
@@ -175,27 +180,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         totalDrawsEl.innerHTML = `<strong>合計回数:</strong> ${totalDraws}`;
 
+        // Hide all optional status displays by default
         pityCounterEl.parentElement.style.display = 'none';
         exchangePointsLi.style.display = 'none';
         genshinGuaranteeLi.style.display = 'none';
 
-        if (config.pityType === 'direct' && config.pity > 0) { // FGO, Genshin, Custom-Direct
+        if (config.pityType === 'direct' && config.pity > 0) {
             pityCounterEl.innerHTML = `<strong>天井カウント:</strong> ${pityCount} / ${config.pity}`;
             pityCounterEl.parentElement.style.display = 'block';
         }
 
-        if (config.pityType === 'exchange' && config.pity > 0) { // Uma, Priconne, Arknights, Granblue, Custom-Exchange
+        if (config.pityType === 'exchange' && config.pity > 0) {
             const pointName = config.pointName || '交換Pt';
             exchangePointsEl.innerHTML = `<strong>${pointName}:</strong> ${exchangePoints} / ${config.pity}`;
             exchangePointsLi.style.display = 'block';
         }
 
-        if (game === 'game_e') { // arknights
+        // Game-specific UI updates
+        if (game === 'game_e') {
             pityCounterEl.innerHTML = `<strong>前回最高レアからの回数:</strong> ${pityCount}`;
             pityCounterEl.parentElement.style.display = 'block';
         }
 
-        if (game === 'game_b') { // genshin
+        if (game === 'game_b') {
             genshinGuaranteeEl.innerHTML = `<strong>次回PU確定:</strong> ${isGuaranteedPu ? 'はい' : 'いいえ'}`;
             genshinGuaranteeLi.style.display = 'block';
         }
@@ -240,167 +247,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function drawOnce() {
         state.totalDraws++;
-        const { config, game } = state;
-        let result = { rarity: 'R', isPu: false, guaranteed: false };
+        const { game } = state;
 
-        // Handle game-specific complex logic first
-        if (game === 'fgo') {
-            return drawFGO();
-        } else if (game === 'genshin') {
-            return drawGenshin();
-        } else if (game === 'arknights') {
-            return drawArknights();
+        // Dispatch to the correct drawing function based on game id
+        switch (game) {
+            case 'game_a':
+                return drawGameA();
+            case 'game_b':
+                return drawGameB();
+            case 'game_e':
+                return drawGameE();
+            case 'dynamic_rate':
+                return drawDynamicRate();
+            default:
+                return drawGeneric();
         }
-
-        // --- Generic Logic for standard and custom games ---
-        state.pityCount++;
-        if (config.pityType === 'exchange' && config.pity > 0) {
-            state.exchangePoints++;
-        }
-        if (game === 'game_a') { // fgo
-            state.pityCount++;
-            if (state.pityCount === config.pity) {
-                result = { rarity: 'SSR', isPu: true, guaranteed: true };
-                state.pityCount = 0;
-                return result;
-            }
-            const rand = Math.random();
-            const puSsrRate = 0.008;
-            if (rand < puSsrRate) {
-                result = { rarity: 'SSR', isPu: true };
-                state.pityCount = 0;
-            } else if (rand < config.ssrRate) {
-                result = { rarity: 'SSR', isPu: false };
-            } else if (rand < config.ssrRate + config.srRate) {
-                result = { rarity: 'SR' };
-            }
-
-        } else if (game === 'game_b') { // genshin
-            state.pityCount++;
-            let currentSsrRate = config.ssrRate;
-
-            if (state.pityCount >= config.softPityStart) {
-                currentSsrRate += (1 - config.ssrRate) / (config.pity - config.softPityStart + 1);
-            }
-            if (state.pityCount === config.pity) {
-                currentSsrRate = 1;
-            }
-
-        let currentSsrRate = config.ssrRate;
-        let isPityHit = false;
-
-        // Check for direct pity
-        if (config.pityType === 'direct' && config.pity > 0 && state.pityCount >= config.pity) {
-            currentSsrRate = 1;
-            isPityHit = true;
-        }
-        } else if (game === 'game_e') { // arknights
-            state.exchangePoints++;
-            state.pityCount++;
-            let currentSsrRate = config.ssrRate;
-
-        const rand = Math.random();
-        if (rand < currentSsrRate) {
-            result = {
-                rarity: 'SSR',
-                isPu: Math.random() < (config.puRate || 0.5),
-                guaranteed: isPityHit
-            };
-            // Reset pity counter only if an SSR is hit (pity or random)
-            state.pityCount = 0;
-        } else if (rand < currentSsrRate + config.srRate) {
-            result = { rarity: 'SR' };
-        }
-
-        // For games like Uma, where pity is purely exchange-based, pityCount doesn't matter for SSR chance.
-        // We still track it in case a user combines pity types in custom mode.
-        // The games that use this generic path are: uma, priconne, granblue, and custom.
-
-        return result;
     }
 
-    // --- Game-specific draw functions for complex logic ---
+    // --- Game-specific draw functions ---
 
-    function drawFGO() {
+    function drawGameA() { // Formerly FGO
         const { config } = state;
-        state.pityCount++; // Counts towards 330 guarantee
+        state.pityCount++;
 
-        // Per user feedback, any SSR pull (pity or random) resets the counter.
-        // Check for hard pity first.
         if (state.pityCount >= config.pity) {
             state.pityCount = 0;
             return { rarity: 'SSR', isPu: true, guaranteed: true };
         }
 
         const rand = Math.random();
-        const puSsrRate = 0.008;
-        const totalSsrRate = config.ssrRate;
-
-        if (rand < totalSsrRate) { // An SSR was drawn
-            state.pityCount = 0; // Reset pity counter
-            const isPu = rand < puSsrRate;
-            return { rarity: 'SSR', isPu: isPu, guaranteed: false };
-        } else if (rand < totalSsrRate + config.srRate) {
+        if (rand < config.ssrRate) {
+            state.pityCount = 0; // Reset pity on any SSR
+            const isPu = rand < (config.puSsrRate || 0.008);
+            return { rarity: 'SSR', isPu, guaranteed: false };
+        } else if (rand < config.ssrRate + config.srRate) {
             return { rarity: 'SR' };
         }
         return { rarity: 'R' };
     }
 
-    function drawGenshin() {
+    function drawGameB() { // Formerly Genshin
         const { config } = state;
         state.pityCount++;
         let currentSsrRate = config.ssrRate;
+        const isPity = state.pityCount >= config.pity;
 
-        if (state.pityCount >= config.softPityStart) {
-            currentSsrRate += (1 - config.ssrRate) / (config.pity - config.softPityStart + 1);
-        }
-        if (state.pityCount === config.pity) {
+        if (isPity) {
             currentSsrRate = 1;
+        } else if (state.pityCount >= config.softPityStart) {
+            // A simple linear increase for soft pity
+            currentSsrRate += (1 - config.ssrRate) * ((state.pityCount - config.softPityStart + 1) / (config.pity - config.softPityStart + 1));
         }
 
         const rand = Math.random();
         if (rand < currentSsrRate) {
-            const isPity = state.pityCount === config.pity;
-            let result;
+            let isPu = false;
             if (state.isGuaranteedPu || Math.random() < config.puRate) {
-                result = { rarity: 'SSR', isPu: true, guaranteed: isPity };
+                isPu = true;
                 state.isGuaranteedPu = false;
             } else {
-                result = { rarity: 'SSR', isPu: false, guaranteed: isPity };
+                isPu = false;
                 state.isGuaranteedPu = true;
-        } else if (config.rateSteps) { // New logic for dynamic rate gacha
-            state.pityCount++;
-            let currentSsrRate = config.ssrRate;
-
-            // Apply stepped rate increases
-            // The steps should be sorted by `after` ascending in the config.
-            for (const step of config.rateSteps) {
-                if (state.pityCount >= step.after) {
-                    currentSsrRate = step.ssrRate;
-                }
             }
-
-            // Check for hard pity
-            const isPity = config.pityType === 'direct' && state.pityCount >= config.pity;
-            if (isPity) {
-                currentSsrRate = 1;
-            }
-
-            const rand = Math.random();
-            if (rand < currentSsrRate) {
-                result = { rarity: 'SSR', isPu: true, guaranteed: isPity };
-                state.pityCount = 0;
-            } else if (rand < currentSsrRate + config.srRate) {
-                result = { rarity: 'SR' };
-            }
-        } else {
-            state.exchangePoints++;
-            const rand = Math.random();
-            if (rand < config.ssrRate) {
-                result = { rarity: 'SSR', isPu: Math.random() < config.puRate };
-            } else if (rand < config.ssrRate + config.srRate) {
-                result = { rarity: 'SR' };
-            }
+            const result = { rarity: 'SSR', isPu, guaranteed: isPity };
             state.pityCount = 0;
             return result;
         } else if (rand < currentSsrRate + config.srRate) {
@@ -409,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return { rarity: 'R' };
     }
 
-    function drawArknights() {
+    function drawGameE() { // Formerly Arknights
         const { config } = state;
         state.exchangePoints++;
         state.pityCount++;
@@ -422,12 +331,65 @@ document.addEventListener('DOMContentLoaded', () => {
         const rand = Math.random();
         if (rand < currentSsrRate) {
             state.pityCount = 0;
-            return { rarity: 'SSR', isPu: Math.random() < config.puRate };
+            const isPu = Math.random() < config.puRate;
+            return { rarity: 'SSR', isPu };
         } else if (rand < currentSsrRate + config.srRate) {
             return { rarity: 'SR' };
         }
         return { rarity: 'R' };
     }
+
+    function drawDynamicRate() {
+        const { config } = state;
+        state.pityCount++;
+        let currentSsrRate = config.ssrRate;
+
+        for (const step of config.rateSteps) {
+            if (state.pityCount >= step.after) {
+                currentSsrRate = step.ssrRate;
+            }
+        }
+
+        const isPity = state.pityCount >= config.pity;
+        if (isPity) {
+            currentSsrRate = 1;
+        }
+
+        const rand = Math.random();
+        if (rand < currentSsrRate) {
+            state.pityCount = 0;
+            return { rarity: 'SSR', isPu: true, guaranteed: isPity };
+        } else if (rand < currentSsrRate + config.srRate) {
+            return { rarity: 'SR' };
+        }
+        return { rarity: 'R' };
+    }
+
+    function drawGeneric() {
+        const { config } = state;
+        state.pityCount++;
+        if (config.pityType === 'exchange') {
+            state.exchangePoints++;
+        }
+
+        let result = { rarity: 'R', isPu: false, guaranteed: false };
+        const rand = Math.random();
+
+        // Direct pity check
+        if (config.pityType === 'direct' && config.pity > 0 && state.pityCount >= config.pity) {
+            result = { rarity: 'SSR', isPu: true, guaranteed: true };
+            state.pityCount = 0;
+            return result;
+        }
+
+        if (rand < config.ssrRate) {
+            result = { rarity: 'SSR', isPu: Math.random() < (config.puRate || 0.5) };
+        } else if (rand < config.ssrRate + config.srRate) {
+            result = { rarity: 'SR' };
+        }
+        return result;
+    }
+
 
     function handleDraw(count) {
         if (!state.config) return;
@@ -439,19 +401,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- 10-Draw SR+ Guarantee ---
-        const has10PullGuarantee = ['fgo', 'uma', 'priconne', 'granblue'].includes(state.game);
-        if (count >= 10 && has10PullGuarantee) {
+        if (count >= 10 && state.config.has10PullGuarantee) {
             const hasSrOrHigher = currentResults.some(res => res.rarity === 'SR' || res.rarity === 'SSR');
             if (!hasSrOrHigher) {
-                // Find the last R card to upgrade it to SR.
-                // We do this post-draw to keep the drawing logic simple and avoid
-                // re-rolling, which would complicate state updates (pity counts etc).
-                // For a simulator, guaranteeing the outcome is sufficient.
-                for (let i = currentResults.length - 1; i >= 0; i--) {
-                    if (currentResults[i].rarity === 'R') {
-                        currentResults[i].rarity = 'SR';
-                        break; // Upgrade only one
-                    }
+                const lastRIndex = currentResults.map(r => r.rarity).lastIndexOf('R');
+                if (lastRIndex !== -1) {
+                    currentResults[lastRIndex].rarity = 'SR';
                 }
             }
         }
@@ -492,5 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initial Load ---
     populateGameSelect();
-    initializeSimulation(gameSelect.value);
+    if (gameSelect.value) {
+        initializeSimulation(gameSelect.value);
+    }
 });
