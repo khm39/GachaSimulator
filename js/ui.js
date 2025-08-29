@@ -140,8 +140,13 @@ function renderStatus(state) {
     if (totalDraws > 0) {
         const ssrCount = results.filter(r => r.rarity === 'SSR').length;
         const srCount = results.filter(r => r.rarity === 'SR').length;
-        statItems.push(h('li', { key: 'ssr-stat', class: 'list-group-item' }, [`SSR: ${ssrCount}体 (${formatPercent(ssrCount / totalDraws)})`]));
-        statItems.push(h('li', { key: 'sr-stat', class: 'list-group-item' }, [`SR: ${srCount}体 (${formatPercent(srCount / totalDraws)})`]));
+        const puCount = results.filter(r => r.isPu).length;
+
+        statItems.push(h('li', { key: 'ssr-stat', class: 'list-group-item' }, [`SSR: ${ssrCount}枚 (${formatPercent(ssrCount / totalDraws)})`]));
+        if (puCount > 0) {
+            statItems.push(h('li', { key: 'pu-stat', class: 'list-group-item ps-4' }, [`└ PU: ${puCount}枚 (${formatPercent(puCount / totalDraws)})`]));
+        }
+        statItems.push(h('li', { key: 'sr-stat', class: 'list-group-item' }, [`SR: ${srCount}枚 (${formatPercent(srCount / totalDraws)})`]));
     } else {
         statItems.push(h('li', { key: 'no-stats', class: 'list-group-item' }, ['まだ引いていません']));
     }
