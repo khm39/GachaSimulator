@@ -2,10 +2,10 @@ import { h } from './vdom.js';
 
 // --- Reusable Components ---
 
-const Col = (props, children) => h('div', { class: `col-lg-${props.size} mb-4` }, children);
-const Card = (props, children) => h('div', { class: 'card' }, children);
-const CardHeader = (props, children) => h('div', { class: 'card-header' }, children);
-const CardBody = (props, children) => h('div', { class: 'card-body' }, children);
+const Col = (props, children) => h('div', { ...props, class: (`col-lg-${props.size} mb-4 ` + (props.class || '')).trim() }, children);
+const Card = (props, children) => h('div', { ...props, class: ('card ' + (props.class || '')).trim() }, children);
+const CardHeader = (props, children) => h('div', { ...props, class: ('card-header ' + (props.class || '')).trim() }, children);
+const CardBody = (props, children) => h('div', { ...props, class: ('card-body ' + (props.class || '')).trim() }, children);
 const Select = (props) => h('select', {
     class: 'form-select',
     id: props.id,
@@ -41,7 +41,9 @@ function renderCustomSettings(state, actions) {
         { value: 'none', text: 'なし', selected: state.customPityType === 'none' },
     ];
 
-    return h('div', { id: 'custom-settings', class: 'mb-3 pt-3 border-top' }, [
+    return h('div', { id: 'custom-settings', class: 'mb-3' }, [
+        h('hr', {}, []),
+        h('h6', { class: 'mb-3' }, ['カスタム設定']),
         InputGroup({ id: 'custom-ssr-rate', label: 'SSR確率 (%):' }, [
             Input({ type: 'number', id: 'custom-ssr-rate', name: 'customSsrRate', value: state.customSsrRate, step: 0.1, onchange: actions.updateCustomSetting })
         ]),
