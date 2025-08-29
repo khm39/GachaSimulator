@@ -1,4 +1,77 @@
 /**
+ * A more advanced, unified draw function for various gacha mechanics.
+ * It is data-driven by the `config` object.
+ * Supports:
+ * - Hard pity
+ * - Rate-up steps (`rateSteps`)
+ * - Programmatic soft pity (`softPity`)
+ * - 50/50 guarantee system (`fiftyFifty`)
+ */
+export function unifiedDraw(state, config) {
+    state.pityCount++;
+
+    // --- Rate Calculation ---
+    let currentSsrRate = config.ssrRate;
+
+    // Method 1: Rate steps (for dynamic_rate)
+    if (config.rateSteps) {
+        for (const step of config.rateSteps) {
+            if (state.pityCount >= step.after) {
+                currentSsrRate = step.ssrRate;
+            }
+        }
+    }
+
+    // Method 2: Programmatic soft pity (for pity_gacha)
+    if (config.softPity) {
+        const { start, factor } = config.softPity;
+        if (state.pityCount >= start) {
+            currentSsrRate += (state.pityCount - (start - 1)) * factor;
+        }
+    }
+
+    // Hard Pity (common to both)
+    const isHardPity = state.pityCount >= config.pity;
+    if (isHardPity) {
+        currentSsrRate = 1.0;
+    }
+
+    // --- Drawing ---
+    const rand = Math.random();
+    if (rand < currentSsrRate) {
+        // It's an SSR
+        state.pityCount = 0; // Reset pity on any SSR
+        let isPu = false;
+
+        // --- 50/50 Logic ---
+        if (config.fiftyFifty) {
+            if (state.isGuaranteedPu) {
+                isPu = true;
+                state.isGuaranteedPu = false; // Reset guarantee
+            } else {
+                if (Math.random() < 0.5) {
+                    isPu = true;
+                } else {
+                    // Lost 50/50, guarantee next one
+                    isPu = false;
+                    state.isGuaranteedPu = true;
+                }
+            }
+        } else {
+            // If no 50/50 system, every SSR is a "pickup" by default
+            isPu = true;
+        }
+        return { rarity: 'SSR', isPu, guaranteed: isHardPity };
+
+    } else if (rand < currentSsrRate + config.srRate) {
+        return { rarity: 'SR' };
+    }
+
+    return { rarity: 'R' };
+}
+
+
+/**
  * Generic draw logic for standard gacha systems.
  * @param {object} state The current simulation state.
  * @param {object} config The configuration for the specific game.
