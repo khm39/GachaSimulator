@@ -16,8 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const genshinGuaranteeLi = document.querySelector('#genshin-guarantee').parentElement;
 
     // --- Game Configurations ---
-    const gameConfigs = {
-        game_a: { // fgo
+    const gameConfigs = [
+        {
+            id: 'game_a', // fgo
             name: '運命召喚',
             ssrRate: 0.01,
             srRate: 0.03,
@@ -25,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pityType: 'direct',
             pityDesc: '330回以内にPU対象の最高レアが1つ確定。',
         },
-        game_b: { // genshin
+        {
+            id: 'game_b', // genshin
             name: '七神の国',
             ssrRate: 0.006,
             srRate: 0.051,
@@ -35,7 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '90回で最高レアが確定。74回から確率上昇。すり抜けたら次回最高レアはPU確定。',
         },
-        game_c: { // uma
+        {
+            id: 'game_c', // uma
             name: '駿馬むすめ',
             ssrRate: 0.03,
             srRate: 0.18,
@@ -45,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
         },
-        game_d: { // priconne
+        {
+            id: 'game_d', // priconne
             name: '姫君との絆',
             ssrRate: 0.025,
             srRate: 0.18,
@@ -55,7 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
         },
-        game_e: { // arknights
+        {
+            id: 'game_e', // arknights
             name: '明日への方舟',
             ssrRate: 0.02,
             srRate: 0.08,
@@ -66,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '300回で交換可能。51回目から最高レアの確率が2%ずつ上昇。',
         },
-        game_f: { // granblue
+        {
+            id: 'game_f', // granblue
             name: '蒼き幻想',
             ssrRate: 0.03,
             srRate: 0.15,
@@ -76,15 +82,28 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '300回引くと「交換Pt」が300貯まり、PU対象などと交換可能。',
         }
-    };
+    ];
 
     // --- Simulation State ---
     let state = {};
 
     // --- Functions ---
 
+    function populateGameSelect() {
+        gameConfigs.forEach(config => {
+            const option = document.createElement('option');
+            option.value = config.id;
+            option.textContent = config.name;
+            gameSelect.appendChild(option);
+        });
+    }
+
     function initializeSimulation(gameId) {
-        const config = gameConfigs[gameId];
+        const config = gameConfigs.find(g => g.id === gameId);
+        if (!config) {
+            console.error(`Configuration not found for gameId: ${gameId}`);
+            return;
+        }
 
         state = {
             game: gameId,
@@ -281,5 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Initial Load ---
+    populateGameSelect();
     initializeSimulation(gameSelect.value);
 });
