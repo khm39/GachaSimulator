@@ -5,7 +5,7 @@
  * @param {Array<object|string>} children The element's child nodes.
  * @returns {object} A virtual DOM node.
  */
-export function h(tag, props, children) {
+export function h(tag, props, children = []) {
     const key = props ? props.key : undefined;
     if (props && props.key) {
         delete props.key;
