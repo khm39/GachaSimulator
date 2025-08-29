@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusListRoot = document.querySelector('#status-display .list-group-flush');
     const resultsRoot = document.getElementById('results-display');
 
+    // Clear static placeholder content to prevent conflicts with VDOM
+    statusListRoot.innerHTML = '';
+    resultsRoot.innerHTML = '';
 
     // --- DOM Elements (Controls) ---
     const gameSelect = document.getElementById('game-select');
