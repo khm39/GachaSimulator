@@ -125,10 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Initial Load ---
-    const initialGameId = gameService.getAllGames()[0]?.id;
-    if (initialGameId) {
-        initializeSimulation(initialGameId);
-    } else {
-        appRoot.textContent = 'No games configured.';
-    }
+    // Default to the 'custom' game screen on startup as requested.
+    initializeSimulation('custom');
 });
