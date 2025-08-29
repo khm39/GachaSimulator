@@ -24,6 +24,18 @@ document.addEventListener('DOMContentLoaded', () => {
         reset: () => {
             initializeSimulation(state.game);
         },
+        updateCustomSetting: (e) => {
+            const { name, value, type } = e.target;
+            const parsedValue = type === 'number' ? parseFloat(value) : value;
+            state[name] = parsedValue;
+
+            // If we are currently on the custom game, re-initialize to apply the new config
+            if (state.game === 'custom') {
+                initializeSimulation('custom');
+            } else {
+                render(); // Just re-render to show the new value in the (hidden) input
+            }
+        }
     };
 
     // --- Functions ---
@@ -46,6 +58,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let baseConfig = gameService.getGame(gameId);
         if (!baseConfig) return;
 
+        // Grab current custom settings before creating a fresh state
+        const customSettings = {
+            customSsrRate: state.customSsrRate || 3,
+            customSrRate: state.customSrRate || 15,
+            customPityType: state.customPityType || 'exchange',
+            customPityCount: state.customPityCount || 200,
+        };
+
+        // Create a fresh state for a new simulation
         state = {
             game: gameId,
             config: { ...baseConfig },
@@ -55,7 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
             isGuaranteedPu: false,
             results: [],
             nextResultId: 0,
+            // Carry over the custom settings themselves
+            ...customSettings,
         };
+
+        // If the selected game is custom, apply the custom settings to the active config
+        if (gameId === 'custom') {
+            state.config.ssrRate = state.customSsrRate / 100;
+            state.config.srRate = state.customSrRate / 100;
+            state.config.pityType = state.customPityType;
+            state.config.pity = state.customPityCount;
+        }
+
         render();
     }
 
