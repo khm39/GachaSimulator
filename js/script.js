@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     statusListRoot.innerHTML = '';
     resultsRoot.innerHTML = '';
 
-
     // --- DOM Elements (Controls) ---
     const gameSelect = document.getElementById('game-select');
     const draw1Btn = document.getElementById('draw-1-btn');
