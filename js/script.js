@@ -272,18 +272,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawFGO() {
         const { config } = state;
         state.pityCount++; // Counts towards 330 guarantee
-        if (state.pityCount === config.pity) {
+
+        // Per user feedback, any SSR pull (pity or random) resets the counter.
+        // Check for hard pity first.
+        if (state.pityCount >= config.pity) {
             state.pityCount = 0;
             return { rarity: 'SSR', isPu: true, guaranteed: true };
         }
+
         const rand = Math.random();
         const puSsrRate = 0.008;
-        if (rand < puSsrRate) {
-            state.pityCount = 0;
-            return { rarity: 'SSR', isPu: true };
-        } else if (rand < config.ssrRate) {
-            return { rarity: 'SSR', isPu: false };
-        } else if (rand < config.ssrRate + config.srRate) {
+        const totalSsrRate = config.ssrRate;
+
+        if (rand < totalSsrRate) { // An SSR was drawn
+            state.pityCount = 0; // Reset pity counter
+            const isPu = rand < puSsrRate;
+            return { rarity: 'SSR', isPu: isPu, guaranteed: false };
+        } else if (rand < totalSsrRate + config.srRate) {
             return { rarity: 'SR' };
         }
         return { rarity: 'R' };
@@ -351,6 +356,24 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < count; i++) {
             const result = drawOnce();
             currentResults.push(result);
+        }
+
+        // --- 10-Draw SR+ Guarantee ---
+        const has10PullGuarantee = ['fgo', 'uma', 'priconne', 'granblue'].includes(state.game);
+        if (count >= 10 && has10PullGuarantee) {
+            const hasSrOrHigher = currentResults.some(res => res.rarity === 'SR' || res.rarity === 'SSR');
+            if (!hasSrOrHigher) {
+                // Find the last R card to upgrade it to SR.
+                // We do this post-draw to keep the drawing logic simple and avoid
+                // re-rolling, which would complicate state updates (pity counts etc).
+                // For a simulator, guaranteeing the outcome is sufficient.
+                for (let i = currentResults.length - 1; i >= 0; i--) {
+                    if (currentResults[i].rarity === 'R') {
+                        currentResults[i].rarity = 'SR';
+                        break; // Upgrade only one
+                    }
+                }
+            }
         }
 
         // Render results to the screen, prepending new ones
