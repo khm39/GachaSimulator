@@ -1,3 +1,7 @@
+.hidden {
+    display: none;
+}
+
 /* Custom styles will be added here */
 body {
     padding-top: 20px;

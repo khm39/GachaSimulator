@@ -32,8 +32,36 @@
                                     <option value="arknights">明日への方舟</option>
                                     <option value="granblue">蒼き幻想</option>
                                     <option value="dynamicRate">確率変動ガチャ</option>
+                                    <option value="custom">カスタム</option>
                                 </select>
                             </div>
+
+                            <!-- Custom Settings -->
+                            <div id="custom-settings" class="mb-3 hidden">
+                                <hr>
+                                <h6 class="mb-3">カスタム設定</h6>
+                                <div class="mb-2">
+                                    <label for="custom-ssr-rate" class="form-label">SSR確率 (%):</label>
+                                    <input type="number" class="form-control" id="custom-ssr-rate" value="3" step="0.1">
+                                </div>
+                                <div class="mb-2">
+                                    <label for="custom-sr-rate" class="form-label">SR確率 (%):</label>
+                                    <input type="number" class="form-control" id="custom-sr-rate" value="15" step="0.1">
+                                </div>
+                                <div class="mb-2">
+                                    <label for="custom-pity-type" class="form-label">天井システム:</label>
+                                    <select class="form-select" id="custom-pity-type">
+                                        <option value="exchange">交換ポイント</option>
+                                        <option value="direct">直接保証</option>
+                                        <option value="none">なし</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="custom-pity-count" class="form-label">天井までの回数:</label>
+                                    <input type="number" class="form-control" id="custom-pity-count" value="200" step="1">
+                                </div>
+                            </div>
+
                             <div class="d-grid gap-2 mb-3">
                                 <button class="btn btn-primary" id="draw-1-btn">1回引く</button>
                                 <button class="btn btn-success" id="draw-10-btn">10回引く</button>
