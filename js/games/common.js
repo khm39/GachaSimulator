@@ -1,4 +1,44 @@
 /**
+ * Calculates the current SSR rate based on the game's state and configuration.
+ * This logic is shared between the draw simulation and the UI display.
+ * @param {object} state The current simulation state.
+ * @param {object} config The configuration for the selected game.
+ * @returns {number} The calculated current SSR rate.
+ */
+export function calculateCurrentSsrRate(state, config) {
+    let currentSsrRate = config.ssrRate;
+
+    // Soft Pity
+    if (config.softPity) {
+        const { start, factor, type = 'additive' } = config.softPity;
+        if (state.pityCount >= start) {
+            if (type === 'additive') {
+                currentSsrRate += (state.pityCount - (start - 1)) * factor;
+            } else if (type === 'linear') {
+                currentSsrRate += (1.0 - config.ssrRate) * ((state.pityCount - start + 1) / (config.pity - start + 1));
+            }
+        }
+    }
+
+    // Rate Steps (overwrites soft pity if both are defined for a given count)
+    if (config.rateSteps) {
+        for (const step of config.rateSteps) {
+            if (state.pityCount >= step.after) {
+                currentSsrRate = step.ssrRate;
+            }
+        }
+    }
+
+     // Hard Pity (highest priority)
+    if (config.pity > 0 && state.pityCount >= config.pity) {
+        currentSsrRate = 1.0;
+    }
+
+    return currentSsrRate;
+}
+
+
+/**
  * A more advanced, unified draw function for various gacha mechanics.
  * It is data-driven by the `config` object.
  * Supports:
@@ -15,35 +55,8 @@ export function unifiedDraw(state, config) {
     }
 
     // --- Rate Calculation ---
-    let currentSsrRate = config.ssrRate;
-
-    // Soft Pity
-    if (config.softPity) {
-        const { start, factor, type = 'additive' } = config.softPity;
-        if (state.pityCount >= start) {
-            if (type === 'additive') {
-                currentSsrRate += (state.pityCount - (start - 1)) * factor;
-            } else if (type === 'linear') {
-                // Linear interpolation from base rate to 1.0
-                currentSsrRate += (1.0 - config.ssrRate) * ((state.pityCount - start + 1) / (config.pity - start + 1));
-            }
-        }
-    }
-
-    // Rate Steps (overwrites soft pity if both are defined for a given count)
-    if (config.rateSteps) {
-        for (const step of config.rateSteps) {
-            if (state.pityCount >= step.after) {
-                currentSsrRate = step.ssrRate;
-            }
-        }
-    }
-
-    // Hard Pity (highest priority)
+    const currentSsrRate = calculateCurrentSsrRate(state, config);
     const isHardPity = config.pity > 0 && state.pityCount >= config.pity;
-    if (isHardPity) {
-        currentSsrRate = 1.0;
-    }
 
     // --- Drawing ---
     const rand = Math.random();
