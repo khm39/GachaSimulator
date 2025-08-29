@@ -8,12 +8,29 @@
  * - 50/50 guarantee system (`fiftyFifty`)
  */
 export function unifiedDraw(state, config) {
+    // --- State Updates ---
     state.pityCount++;
+    if (config.hasExchangePoints) {
+        state.exchangePoints++;
+    }
 
     // --- Rate Calculation ---
     let currentSsrRate = config.ssrRate;
 
-    // Method 1: Rate steps (for dynamic_rate)
+    // Soft Pity
+    if (config.softPity) {
+        const { start, factor, type = 'additive' } = config.softPity;
+        if (state.pityCount >= start) {
+            if (type === 'additive') {
+                currentSsrRate += (state.pityCount - (start - 1)) * factor;
+            } else if (type === 'linear') {
+                // Linear interpolation from base rate to 1.0
+                currentSsrRate += (1.0 - config.ssrRate) * ((state.pityCount - start + 1) / (config.pity - start + 1));
+            }
+        }
+    }
+
+    // Rate Steps (overwrites soft pity if both are defined for a given count)
     if (config.rateSteps) {
         for (const step of config.rateSteps) {
             if (state.pityCount >= step.after) {
@@ -22,16 +39,8 @@ export function unifiedDraw(state, config) {
         }
     }
 
-    // Method 2: Programmatic soft pity (for pity_gacha)
-    if (config.softPity) {
-        const { start, factor } = config.softPity;
-        if (state.pityCount >= start) {
-            currentSsrRate += (state.pityCount - (start - 1)) * factor;
-        }
-    }
-
-    // Hard Pity (common to both)
-    const isHardPity = state.pityCount >= config.pity;
+    // Hard Pity (highest priority)
+    const isHardPity = config.pity > 0 && state.pityCount >= config.pity;
     if (isHardPity) {
         currentSsrRate = 1.0;
     }
@@ -39,124 +48,44 @@ export function unifiedDraw(state, config) {
     // --- Drawing ---
     const rand = Math.random();
     if (rand < currentSsrRate) {
-        // It's an SSR
-        state.pityCount = 0; // Reset pity on any SSR
+        // --- SSR Result ---
         let isPu = false;
 
-        // --- 50/50 Logic ---
+        // Determine if it's a Pick-Up
         if (config.fiftyFifty) {
-            if (state.isGuaranteedPu) {
+            if (state.isGuaranteedPu || Math.random() < 0.5) {
                 isPu = true;
-                state.isGuaranteedPu = false; // Reset guarantee
+                state.isGuaranteedPu = false;
             } else {
-                if (Math.random() < 0.5) {
-                    isPu = true;
-                } else {
-                    // Lost 50/50, guarantee next one
-                    isPu = false;
-                    state.isGuaranteedPu = true;
-                }
+                isPu = false;
+                state.isGuaranteedPu = true;
             }
+        } else if (config.puRateIsAbsolute) {
+            isPu = rand < config.puSsrRate;
+        } else if (config.puRate) {
+            isPu = Math.random() < config.puRate;
         } else {
-            // If no 50/50 system, every SSR is a "pickup" by default
-            isPu = true;
+            isPu = true; // Default to PU if no system is defined
         }
+
+        // Reset pity counter if configured to do so
+        if (config.pityResetsOnRandom !== false) {
+             state.pityCount = 0;
+        }
+
         return { rarity: 'SSR', isPu, guaranteed: isHardPity };
 
     } else if (rand < currentSsrRate + config.srRate) {
+        // --- SR Result ---
         return { rarity: 'SR' };
     }
 
+    // --- R Result ---
     return { rarity: 'R' };
 }
 
 
-/**
- * Generic draw logic for standard gacha systems.
- * @param {object} state The current simulation state.
- * @param {object} config The configuration for the specific game.
- * @returns {object} The result of the draw (e.g., { rarity: 'R' }).
- */
-function draw(state, config) {
-    state.pityCount++;
-    if (config.pityType === 'exchange') {
-        state.exchangePoints++;
-    }
+// The old draw function is no longer needed and has been removed.
 
-    let result = { rarity: 'R', isPu: false, guaranteed: false };
-
-    // Check for direct pity
-    if (config.pityType === 'direct' && config.pity > 0 && state.pityCount >= config.pity) {
-        result = { rarity: 'SSR', isPu: true, guaranteed: true };
-        state.pityCount = 0; // Reset pity
-        return result;
-    }
-
-    const rand = Math.random();
-    if (rand < config.ssrRate) {
-        result = { rarity: 'SSR', isPu: Math.random() < (config.puRate || 0.5) };
-        // Note: Generic draw doesn't reset pity on random SSR, some games do.
-        // This can be overridden in specific game modules.
-    } else if (rand < config.ssrRate + config.srRate) {
-        result = { rarity: 'SR' };
-    }
-
-    return result;
-}
-
-// --- Game Configurations ---
-
-export const game_c = {
-    id: 'game_c',
-    name: '育成レース',
-    ssrRate: 0.03,
-    srRate: 0.18,
-    pity: 200,
-    pityType: 'exchange',
-    pointName: '交換Pt',
-    puRate: 0.5,
-    pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
-    has10PullGuarantee: true,
-    draw: draw,
-};
-
-export const game_d = {
-    id: 'game_d',
-    name: '学園戦術',
-    ssrRate: 0.025,
-    srRate: 0.18,
-    pity: 200,
-    pityType: 'exchange',
-    pointName: '交換Pt',
-    puRate: 0.5,
-    pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
-    has10PullGuarantee: true,
-    draw: draw,
-};
-
-export const game_f = {
-    id: 'game_f',
-    name: '王道RPG',
-    ssrRate: 0.03,
-    srRate: 0.15,
-    pity: 300,
-    pityType: 'exchange',
-    pointName: '交換Pt',
-    puRate: 0.5,
-    pityDesc: '300回引くと「交換Pt」が300貯まり、PU対象などと交換可能。',
-    has10PullGuarantee: true,
-    draw: draw,
-};
-
-export const custom = {
-    id: 'custom',
-    name: 'カスタム',
-    ssrRate: 0.03, // Default values
-    srRate: 0.15,
-    pity: 200,
-    pityType: 'exchange',
-    pointName: '交換Pt',
-    puRate: 0.5,
-    pityDesc: 'カスタム設定でシミュレーションします。',
-    draw: draw,
-};
+// Game configurations have been moved to their own files.
+// This file now only contains common, shared logic.
