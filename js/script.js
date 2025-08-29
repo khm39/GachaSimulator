@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameConfigs = [
         {
             id: 'game_a',
-            name: 'ゲームA',
+            name: '運命の物語',
             ssrRate: 0.01,
             srRate: 0.03,
             pity: 330,
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             id: 'game_b',
-            name: 'ゲームB',
+            name: '元素反応バトル',
             ssrRate: 0.006,
             srRate: 0.051,
             pity: 90,
@@ -45,10 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
             softPityStart: 74,
             puRate: 0.5,
             pityDesc: '90回で最高レアが確定。74回から確率上昇。すり抜けたら次回最高レアはPU確定。',
+            has10PullGuarantee: true,
         },
         {
             id: 'game_c',
-            name: 'ゲームC',
+            name: '育成レース',
             ssrRate: 0.03,
             srRate: 0.18,
             pity: 200,
@@ -60,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             id: 'game_d',
-            name: 'ゲームD',
+            name: '学園戦術',
             ssrRate: 0.025,
             srRate: 0.18,
             pity: 200,
@@ -72,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             id: 'game_e',
-            name: 'ゲームE',
+            name: 'タワーディフェンス',
             ssrRate: 0.02,
             srRate: 0.08,
             pity: 300,
@@ -84,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             id: 'game_f',
-            name: 'ゲームF',
+            name: '王道RPG',
             ssrRate: 0.03,
             srRate: 0.15,
             pity: 300,
