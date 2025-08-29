@@ -136,11 +136,20 @@ function renderResultCard(result) {
 }
 
 function renderResults(state) {
+    // The results container is now a Card to match the Status panel
     return Col({ size: 8 }, [
-        h('h2', {}, ['結果']),
-        h('div', { id: 'results-display', class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3 p-2 rounded' },
-            [...state.results].reverse().map(renderResultCard)
-        ),
+        Card({}, [
+            CardHeader({}, ['結果']),
+            CardBody({}, [
+                h('div', {
+                    id: 'results-display',
+                    // The row/col classes are for the grid of result items, padding is handled by card-body
+                    class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3'
+                },
+                    [...state.results].reverse().map(renderResultCard)
+                )
+            ])
+        ])
     ]);
 }
 

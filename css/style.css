@@ -32,13 +32,6 @@ body {
     border-style: dashed;
 }
 
-#results-display {
-    min-height: 150px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    padding: 10px;
-}
-
 @keyframes pop-in {
     0% {
         opacity: 0;
