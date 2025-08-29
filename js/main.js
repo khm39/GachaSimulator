@@ -1,5 +1,5 @@
 import { renderApp } from './ui.js';
-import { updateChildren, createElement } from './vdom.js';
+import { updateElement, createElement } from './vdom.js';
 import * as gameService from './gameService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -31,7 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function render() {
         const allGames = gameService.getAllGames();
         const newVApp = renderApp(state, actions, allGames);
-        updateChildren(appRoot, newVApp.children, vApp ? vApp.children : []);
+
+        if (vApp == null) {
+            // Initial render: create the full DOM tree and append it
+            appRoot.appendChild(createElement(newVApp));
+        } else {
+            // Subsequent renders: patch the existing tree by comparing the new and old VDOM
+            updateElement(appRoot, newVApp, vApp);
+        }
         vApp = newVApp;
     }
 
