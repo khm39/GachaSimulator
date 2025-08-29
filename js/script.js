@@ -1,10 +1,26 @@
+import { h, updateChildren } from './vdom.js';
+
 document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM Elements ---
+    // --- VDOM & State ---
+    let state = {};
+    let vApp = {
+        status: [], // Holds an array of vdom <li> nodes
+        results: [], // Holds an array of vdom result card nodes
+    };
+    // Get the direct parents of the dynamic content
+    const statusListRoot = document.querySelector('#status-display .list-group-flush');
+    const resultsRoot = document.getElementById('results-display');
+
+    // Clear static placeholder content to prevent conflicts with VDOM
+    statusListRoot.innerHTML = '';
+    resultsRoot.innerHTML = '';
+
+
+    // --- DOM Elements (Controls) ---
     const gameSelect = document.getElementById('game-select');
     const draw1Btn = document.getElementById('draw-1-btn');
     const draw10Btn = document.getElementById('draw-10-btn');
     const resetBtn = document.getElementById('reset-btn');
-    const resultsDisplay = document.getElementById('results-display');
     const descriptionText = document.getElementById('description');
 
     // Custom settings elements
@@ -14,15 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const customPityTypeEl = document.getElementById('custom-pity-type');
     const customPityCountEl = document.getElementById('custom-pity-count');
 
-    // Status display elements
-    const totalDrawsEl = document.getElementById('total-draws');
-    const pityCounterEl = document.getElementById('pity-counter');
-    const exchangePointsEl = document.getElementById('exchange-points');
-    const exchangePointsLi = document.querySelector('#exchange-points').parentElement;
-    const genshinGuaranteeEl = document.getElementById('genshin-guarantee');
-    const genshinGuaranteeLi = document.querySelector('#genshin-guarantee').parentElement;
-
-    // --- Game Configurations ---
+    // --- Game Configurations (same as before) ---
     const gameConfigs = [
         {
             id: 'game_a',
@@ -33,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pityType: 'direct',
             pityDesc: '330回以内にPU対象の最高レアが1つ確定。',
             has10PullGuarantee: true,
-            puSsrRate: 0.008, // PU対象のSSR排出率
+            puSsrRate: 0.008,
         },
         {
             id: 'game_b',
@@ -98,9 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             id: 'dynamic_rate',
             name: '確率変動ガチャ',
-            ssrRate: 0.01, // Base rate
+            ssrRate: 0.01,
             srRate: 0.10,
-            pity: 100, // Final pity
+            pity: 100,
             pityType: 'direct',
             pityDesc: '10回ごとにSSR確率が上昇し、100回で確定。',
             rateSteps: [
@@ -125,11 +133,87 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
-    // --- Simulation State ---
-    let state = {};
+    // --- View Functions (VDOM) ---
+
+    function renderStatus(state) {
+        const { config, totalDraws, pityCount, exchangePoints, isGuaranteedPu, game } = state;
+        const items = [];
+
+        items.push(h('li', { class: 'list-group-item', id: 'total-draws' }, [
+            h('strong', {}, ['合計回数: ']),
+            `${totalDraws}`
+        ]));
+
+        if (config.pityType === 'direct' && config.pity > 0) {
+            let text = `天井カウント: ${pityCount} / ${config.pity}`;
+            let id = 'pity-counter';
+            if (game === 'game_e') {
+                 text = `前回最高レアからの回数: ${pityCount}`;
+            }
+            items.push(h('li', { class: 'list-group-item', id }, [
+                h('strong', {}, [text.split(':')[0] + ': ']),
+                text.split(':')[1] || ''
+            ]));
+        }
+
+        if (config.pityType === 'exchange' && config.pity > 0) {
+            const pointName = config.pointName || '交換Pt';
+            items.push(h('li', { class: 'list-group-item', id: 'exchange-points' }, [
+                h('strong', {}, [`${pointName}: `]),
+                `${exchangePoints} / ${config.pity}`
+            ]));
+        }
+
+        if (game === 'game_b') {
+            items.push(h('li', { class: 'list-group-item', id: 'genshin-guarantee' }, [
+                h('strong', {}, ['次回PU確定: ']),
+                `${isGuaranteedPu ? 'はい' : 'いいえ'}`
+            ]));
+        }
+
+        return items;
+    }
+
+    function renderResultCard(result) {
+        const { rarity, isPu, guaranteed } = result;
+        const cardClasses = `card result-card text-center h-100 ${rarity.toLowerCase()}${isPu ? ' pickup' : ''}`;
+        const badges = [];
+
+        if (isPu) {
+            badges.push(h('span', { class: 'badge bg-warning text-dark position-absolute top-0 start-0 m-1' }, ['PU']));
+        }
+        if (guaranteed) {
+            badges.push(h('span', { class: 'badge bg-info text-dark position-absolute top-0 end-0 m-1' }, ['天井']));
+        }
+
+        return h('div', { class: 'col result-card-wrapper' }, [
+            h('div', { class: cardClasses }, [
+                ...badges,
+                h('div', { class: 'card-body p-2 d-flex flex-column justify-content-center' }, [
+                    h('h5', { class: 'card-title mb-0' }, [rarity])
+                ])
+            ])
+        ]);
+    }
+
+    function renderResults(state) {
+        // Render in reverse order to show newest first
+        return [...state.results].reverse().map(renderResultCard);
+    }
+
+    function update() {
+        const newStatusVNodes = renderStatus(state);
+        const newResultsVNodes = renderResults(state);
+
+        updateChildren(statusListRoot, newStatusVNodes, vApp.status);
+        updateChildren(resultsRoot, newResultsVNodes, vApp.results);
+
+        vApp.status = newStatusVNodes;
+        vApp.results = newResultsVNodes;
+    }
+
 
     // --- Functions ---
-
     function populateGameSelect() {
         gameConfigs.forEach(config => {
             const option = document.createElement('option');
@@ -167,118 +251,38 @@ document.addEventListener('DOMContentLoaded', () => {
             totalDraws: 0,
             pityCount: 0,
             exchangePoints: 0,
-            isGuaranteedPu: false, // For game_b
-            ssrCountSinceLastSr: 0, // For specific game logic if needed
+            isGuaranteedPu: false,
+            results: [],
         };
 
-        resultsDisplay.innerHTML = '';
         descriptionText.textContent = finalConfig.pityDesc;
-        updateStatusUI();
-    }
-
-    function updateStatusUI() {
-        const { config, totalDraws, pityCount, exchangePoints, isGuaranteedPu, game } = state;
-
-        totalDrawsEl.innerHTML = `<strong>合計回数:</strong> ${totalDraws}`;
-
-        // Hide all optional status displays by default
-        pityCounterEl.parentElement.style.display = 'none';
-        exchangePointsLi.style.display = 'none';
-        genshinGuaranteeLi.style.display = 'none';
-
-        if (config.pityType === 'direct' && config.pity > 0) {
-            pityCounterEl.innerHTML = `<strong>天井カウント:</strong> ${pityCount} / ${config.pity}`;
-            pityCounterEl.parentElement.style.display = 'block';
-        }
-
-        if (config.pityType === 'exchange' && config.pity > 0) {
-            const pointName = config.pointName || '交換Pt';
-            exchangePointsEl.innerHTML = `<strong>${pointName}:</strong> ${exchangePoints} / ${config.pity}`;
-            exchangePointsLi.style.display = 'block';
-        }
-
-        // Game-specific UI updates
-        if (game === 'game_e') {
-            pityCounterEl.innerHTML = `<strong>前回最高レアからの回数:</strong> ${pityCount}`;
-            pityCounterEl.parentElement.style.display = 'block';
-        }
-
-        if (game === 'game_b') {
-            genshinGuaranteeEl.innerHTML = `<strong>次回PU確定:</strong> ${isGuaranteedPu ? 'はい' : 'いいえ'}`;
-            genshinGuaranteeLi.style.display = 'block';
-        }
-    }
-
-    function createResultCard(result) {
-        const { rarity, isPu, guaranteed } = result;
-        const card = document.createElement('div');
-        card.className = 'card result-card text-center h-100';
-
-        const cardBody = document.createElement('div');
-        cardBody.className = 'card-body p-2 d-flex flex-column justify-content-center';
-
-        const rarityText = document.createElement('h5');
-        rarityText.className = 'card-title mb-0';
-        rarityText.textContent = rarity;
-
-        card.classList.add(rarity.toLowerCase());
-        if (isPu) {
-            card.classList.add('pickup');
-            const puBadge = document.createElement('span');
-            puBadge.className = 'badge bg-warning text-dark position-absolute top-0 start-0 m-1';
-            puBadge.textContent = 'PU';
-            card.appendChild(puBadge);
-        }
-        if (guaranteed) {
-            const pityBadge = document.createElement('span');
-            pityBadge.className = 'badge bg-info text-dark position-absolute top-0 end-0 m-1';
-            pityBadge.textContent = '天井';
-            card.appendChild(pityBadge);
-        }
-
-        cardBody.appendChild(rarityText);
-        card.appendChild(cardBody);
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'col result-card-wrapper';
-        wrapper.appendChild(card);
-
-        return wrapper;
+        update();
     }
 
     function drawOnce() {
         state.totalDraws++;
         const { game } = state;
 
-        // Dispatch to the correct drawing function based on game id
         switch (game) {
-            case 'game_a':
-                return drawGameA();
-            case 'game_b':
-                return drawGameB();
-            case 'game_e':
-                return drawGameE();
-            case 'dynamic_rate':
-                return drawDynamicRate();
-            default:
-                return drawGeneric();
+            case 'game_a': return drawGameA();
+            case 'game_b': return drawGameB();
+            case 'game_e': return drawGameE();
+            case 'dynamic_rate': return drawDynamicRate();
+            default: return drawGeneric();
         }
     }
 
-    // --- Game-specific draw functions ---
-
-    function drawGameA() { // Formerly FGO
+    // --- Game-specific draw functions (unchanged) ---
+    function drawGameA() {
         const { config } = state;
         state.pityCount++;
-
         if (state.pityCount >= config.pity) {
             state.pityCount = 0;
             return { rarity: 'SSR', isPu: true, guaranteed: true };
         }
-
         const rand = Math.random();
         if (rand < config.ssrRate) {
-            state.pityCount = 0; // Reset pity on any SSR
+            state.pityCount = 0;
             const isPu = rand < (config.puSsrRate || 0.008);
             return { rarity: 'SSR', isPu, guaranteed: false };
         } else if (rand < config.ssrRate + config.srRate) {
@@ -287,19 +291,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return { rarity: 'R' };
     }
 
-    function drawGameB() { // Formerly Genshin
+    function drawGameB() {
         const { config } = state;
         state.pityCount++;
         let currentSsrRate = config.ssrRate;
         const isPity = state.pityCount >= config.pity;
-
         if (isPity) {
             currentSsrRate = 1;
         } else if (state.pityCount >= config.softPityStart) {
-            // A simple linear increase for soft pity
             currentSsrRate += (1 - config.ssrRate) * ((state.pityCount - config.softPityStart + 1) / (config.pity - config.softPityStart + 1));
         }
-
         const rand = Math.random();
         if (rand < currentSsrRate) {
             let isPu = false;
@@ -319,16 +320,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return { rarity: 'R' };
     }
 
-    function drawGameE() { // Formerly Arknights
+    function drawGameE() {
         const { config } = state;
         state.exchangePoints++;
         state.pityCount++;
         let currentSsrRate = config.ssrRate;
-
         if (state.pityCount >= config.softPityStart) {
             currentSsrRate += 0.02 * (state.pityCount - config.softPityStart + 1);
         }
-
         const rand = Math.random();
         if (rand < currentSsrRate) {
             state.pityCount = 0;
@@ -344,18 +343,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const { config } = state;
         state.pityCount++;
         let currentSsrRate = config.ssrRate;
-
         for (const step of config.rateSteps) {
             if (state.pityCount >= step.after) {
                 currentSsrRate = step.ssrRate;
             }
         }
-
         const isPity = state.pityCount >= config.pity;
         if (isPity) {
             currentSsrRate = 1;
         }
-
         const rand = Math.random();
         if (rand < currentSsrRate) {
             state.pityCount = 0;
@@ -372,17 +368,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (config.pityType === 'exchange') {
             state.exchangePoints++;
         }
-
         let result = { rarity: 'R', isPu: false, guaranteed: false };
         const rand = Math.random();
-
-        // Direct pity check
         if (config.pityType === 'direct' && config.pity > 0 && state.pityCount >= config.pity) {
             result = { rarity: 'SSR', isPu: true, guaranteed: true };
             state.pityCount = 0;
             return result;
         }
-
         if (rand < config.ssrRate) {
             result = { rarity: 'SSR', isPu: Math.random() < (config.puRate || 0.5) };
         } else if (rand < config.ssrRate + config.srRate) {
@@ -401,7 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
             currentResults.push(result);
         }
 
-        // --- 10-Draw SR+ Guarantee ---
         if (count >= 10 && state.config.has10PullGuarantee) {
             const hasSrOrHigher = currentResults.some(res => res.rarity === 'SR' || res.rarity === 'SSR');
             if (!hasSrOrHigher) {
@@ -412,12 +403,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        currentResults.reverse().forEach(result => {
-            const cardElement = createResultCard(result);
-            resultsDisplay.prepend(cardElement);
-        });
-
-        updateStatusUI();
+        state.results.push(...currentResults);
+        update();
     }
 
     // --- Event Listeners ---
@@ -434,6 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     resetBtn.addEventListener('click', () => {
+        // Resetting the vdom state as well
+        vApp.status = [];
+        vApp.results = [];
         initializeSimulation(gameSelect.value);
     });
 
