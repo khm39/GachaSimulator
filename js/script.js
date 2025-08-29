@@ -81,6 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
             pointName: '交換Pt',
             puRate: 0.5,
             pityDesc: '300回引くと「交換Pt」が300貯まり、PU対象などと交換可能。',
+        },
+        dynamicRate: {
+            name: '確率変動ガチャ',
+            ssrRate: 0.01, // Base rate
+            srRate: 0.10,
+            pity: 100, // Final pity
+            pityType: 'direct',
+            pityDesc: '10回ごとにSSR確率が上昇し、100回で確定。',
+            rateSteps: [
+                { after: 10, ssrRate: 0.02 },
+                { after: 20, ssrRate: 0.03 },
+                { after: 30, ssrRate: 0.05 },
+                { after: 40, ssrRate: 0.10 },
+                { after: 50, ssrRate: 0.20 },
+                { after: 90, ssrRate: 0.50 }
+            ]
         }
     ];
 
@@ -252,7 +268,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 result = { rarity: 'SR' };
             }
 
-        } else { // Standard Exchange Games (game_c, game_d, game_f)
+        } else if (config.rateSteps) { // New logic for dynamic rate gacha
+            state.pityCount++;
+            let currentSsrRate = config.ssrRate;
+
+            // Apply stepped rate increases
+            // The steps should be sorted by `after` ascending in the config.
+            for (const step of config.rateSteps) {
+                if (state.pityCount >= step.after) {
+                    currentSsrRate = step.ssrRate;
+                }
+            }
+
+            // Check for hard pity
+            const isPity = config.pityType === 'direct' && state.pityCount >= config.pity;
+            if (isPity) {
+                currentSsrRate = 1;
+            }
+
+            const rand = Math.random();
+            if (rand < currentSsrRate) {
+                result = { rarity: 'SSR', isPu: true, guaranteed: isPity };
+                state.pityCount = 0;
+            } else if (rand < currentSsrRate + config.srRate) {
+                result = { rarity: 'SR' };
+            }
+        } else {
             state.exchangePoints++;
             const rand = Math.random();
             if (rand < config.ssrRate) {
