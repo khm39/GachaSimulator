@@ -23,8 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const genshinGuaranteeLi = document.querySelector('#genshin-guarantee').parentElement;
 
     // --- Game Configurations ---
-    const gameConfigs = {
-        fgo: {
+    const gameConfigs = [
+        {
+            id: 'game_a', // fgo
             name: '運命召喚',
             ssrRate: 0.01,
             srRate: 0.03,
@@ -32,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pityType: 'direct',
             pityDesc: '330回以内にPU対象の最高レアが1つ確定。',
         },
-        genshin: {
+        {
+            id: 'game_b', // genshin
             name: '七神の国',
             ssrRate: 0.006,
             srRate: 0.051,
@@ -42,7 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '90回で最高レアが確定。74回から確率上昇。すり抜けたら次回最高レアはPU確定。',
         },
-        uma: {
+        {
+            id: 'game_c', // uma
             name: '駿馬むすめ',
             ssrRate: 0.03,
             srRate: 0.18,
@@ -52,7 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
         },
-        priconne: {
+        {
+            id: 'game_d', // priconne
             name: '姫君との絆',
             ssrRate: 0.025,
             srRate: 0.18,
@@ -62,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '200回引くと「交換Pt」が200貯まり、PU対象と交換可能。',
         },
-        arknights: {
+        {
+            id: 'game_e', // arknights
             name: '明日への方舟',
             ssrRate: 0.02,
             srRate: 0.08,
@@ -73,7 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
             puRate: 0.5,
             pityDesc: '300回で交換可能。51回目から最高レアの確率が2%ずつ上昇。',
         },
-        granblue: {
+        {
+            id: 'game_f', // granblue
             name: '蒼き幻想',
             ssrRate: 0.03,
             srRate: 0.15,
@@ -92,18 +98,39 @@ document.addEventListener('DOMContentLoaded', () => {
             pointName: '交換Pt',
             puRate: 0.5, // Default PU rate
             pityDesc: 'カスタム設定でシミュレーションします。',
+        },
+        dynamicRate: {
+            name: '確率変動ガチャ',
+            ssrRate: 0.01, // Base rate
+            srRate: 0.10,
+            pity: 100, // Final pity
+            pityType: 'direct',
+            pityDesc: '10回ごとにSSR確率が上昇し、100回で確定。',
+            rateSteps: [
+                { after: 10, ssrRate: 0.02 },
+                { after: 20, ssrRate: 0.03 },
+                { after: 30, ssrRate: 0.05 },
+                { after: 40, ssrRate: 0.10 },
+                { after: 50, ssrRate: 0.20 },
+                { after: 90, ssrRate: 0.50 }
+            ]
         }
-    };
+    ];
 
     // --- Simulation State ---
     let state = {};
 
     // --- Functions ---
 
-    /**
-     * Initializes or resets the simulation for a given game.
-     * @param {string} gameId - The ID of the game to initialize.
-     */
+    function populateGameSelect() {
+        gameConfigs.forEach(config => {
+            const option = document.createElement('option');
+            option.value = config.id;
+            option.textContent = config.name;
+            gameSelect.appendChild(option);
+        });
+    }
+
     function initializeSimulation(gameId) {
         let config;
 
@@ -123,14 +150,19 @@ document.addEventListener('DOMContentLoaded', () => {
             config = gameConfigs[gameId];
         }
 
+        const config = gameConfigs.find(g => g.id === gameId);
+        if (!config) {
+            console.error(`Configuration not found for gameId: ${gameId}`);
+            return;
+        }
 
         state = {
             game: gameId,
             config: config,
             totalDraws: 0,
-            pityCount: 0, // Counts since last SSR for direct pity systems
+            pityCount: 0,
             exchangePoints: 0,
-            isGuaranteedPu: false, // For Genshin's specific guarantee mechanic
+            isGuaranteedPu: false,
         };
 
         resultsDisplay.innerHTML = '';
@@ -138,15 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStatusUI();
     }
 
-    /**
-     * Updates the entire status display based on the current state.
-     */
     function updateStatusUI() {
         const { config, totalDraws, pityCount, exchangePoints, isGuaranteedPu, game } = state;
 
         totalDrawsEl.innerHTML = `<strong>合計回数:</strong> ${totalDraws}`;
 
-        // Hide all optional status fields by default, then show them as needed
         pityCounterEl.parentElement.style.display = 'none';
         exchangePointsLi.style.display = 'none';
         genshinGuaranteeLi.style.display = 'none';
@@ -162,25 +190,21 @@ document.addEventListener('DOMContentLoaded', () => {
             exchangePointsLi.style.display = 'block';
         }
 
-        if (game === 'arknights') {
-            pityCounterEl.innerHTML = `<strong>前回星6からの回数:</strong> ${pityCount}`;
+        if (game === 'game_e') { // arknights
+            pityCounterEl.innerHTML = `<strong>前回最高レアからの回数:</strong> ${pityCount}`;
             pityCounterEl.parentElement.style.display = 'block';
         }
 
-        if (game === 'genshin') {
+        if (game === 'game_b') { // genshin
             genshinGuaranteeEl.innerHTML = `<strong>次回PU確定:</strong> ${isGuaranteedPu ? 'はい' : 'いいえ'}`;
             genshinGuaranteeLi.style.display = 'block';
         }
     }
 
-    /**
-     * Creates the HTML for a single gacha result card.
-     * @param {object} result - The result object from drawOnce.
-     */
     function createResultCard(result) {
         const { rarity, isPu, guaranteed } = result;
         const card = document.createElement('div');
-        card.className = 'card result-card text-center h-100'; // h-100 for equal height
+        card.className = 'card result-card text-center h-100';
 
         const cardBody = document.createElement('div');
         cardBody.className = 'card-body p-2 d-flex flex-column justify-content-center';
@@ -200,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (guaranteed) {
             const pityBadge = document.createElement('span');
             pityBadge.className = 'badge bg-info text-dark position-absolute top-0 end-0 m-1';
-            pityBadge.textContent = '天井'; // Pity
+            pityBadge.textContent = '天井';
             card.appendChild(pityBadge);
         }
 
@@ -214,10 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return wrapper;
     }
 
-    /**
-     * Performs a single gacha draw based on the current game's rules.
-     * @returns {object} An object representing the result.
-     */
     function drawOnce() {
         state.totalDraws++;
         const { config, game } = state;
@@ -237,6 +257,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (config.pityType === 'exchange' && config.pity > 0) {
             state.exchangePoints++;
         }
+        if (game === 'game_a') { // fgo
+            state.pityCount++;
+            if (state.pityCount === config.pity) {
+                result = { rarity: 'SSR', isPu: true, guaranteed: true };
+                state.pityCount = 0;
+                return result;
+            }
+            const rand = Math.random();
+            const puSsrRate = 0.008;
+            if (rand < puSsrRate) {
+                result = { rarity: 'SSR', isPu: true };
+                state.pityCount = 0;
+            } else if (rand < config.ssrRate) {
+                result = { rarity: 'SSR', isPu: false };
+            } else if (rand < config.ssrRate + config.srRate) {
+                result = { rarity: 'SR' };
+            }
+
+        } else if (game === 'game_b') { // genshin
+            state.pityCount++;
+            let currentSsrRate = config.ssrRate;
+
+            if (state.pityCount >= config.softPityStart) {
+                currentSsrRate += (1 - config.ssrRate) / (config.pity - config.softPityStart + 1);
+            }
+            if (state.pityCount === config.pity) {
+                currentSsrRate = 1;
+            }
 
         let currentSsrRate = config.ssrRate;
         let isPityHit = false;
@@ -246,6 +294,10 @@ document.addEventListener('DOMContentLoaded', () => {
             currentSsrRate = 1;
             isPityHit = true;
         }
+        } else if (game === 'game_e') { // arknights
+            state.exchangePoints++;
+            state.pityCount++;
+            let currentSsrRate = config.ssrRate;
 
         const rand = Math.random();
         if (rand < currentSsrRate) {
@@ -316,6 +368,38 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 result = { rarity: 'SSR', isPu: false, guaranteed: isPity };
                 state.isGuaranteedPu = true;
+        } else if (config.rateSteps) { // New logic for dynamic rate gacha
+            state.pityCount++;
+            let currentSsrRate = config.ssrRate;
+
+            // Apply stepped rate increases
+            // The steps should be sorted by `after` ascending in the config.
+            for (const step of config.rateSteps) {
+                if (state.pityCount >= step.after) {
+                    currentSsrRate = step.ssrRate;
+                }
+            }
+
+            // Check for hard pity
+            const isPity = config.pityType === 'direct' && state.pityCount >= config.pity;
+            if (isPity) {
+                currentSsrRate = 1;
+            }
+
+            const rand = Math.random();
+            if (rand < currentSsrRate) {
+                result = { rarity: 'SSR', isPu: true, guaranteed: isPity };
+                state.pityCount = 0;
+            } else if (rand < currentSsrRate + config.srRate) {
+                result = { rarity: 'SR' };
+            }
+        } else {
+            state.exchangePoints++;
+            const rand = Math.random();
+            if (rand < config.ssrRate) {
+                result = { rarity: 'SSR', isPu: Math.random() < config.puRate };
+            } else if (rand < config.ssrRate + config.srRate) {
+                result = { rarity: 'SR' };
             }
             state.pityCount = 0;
             return result;
@@ -345,10 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return { rarity: 'R' };
     }
 
-    /**
-     * Main function to handle drawing gacha.
-     * @param {number} count - The number of draws to perform.
-     */
     function handleDraw(count) {
         if (!state.config) return;
 
@@ -376,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Render results to the screen, prepending new ones
         currentResults.reverse().forEach(result => {
             const cardElement = createResultCard(result);
             resultsDisplay.prepend(cardElement);
@@ -412,5 +491,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Initial Load ---
+    populateGameSelect();
     initializeSimulation(gameSelect.value);
 });
