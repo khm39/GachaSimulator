@@ -5,13 +5,29 @@
  * @param {Array<object|string>} children The element's child nodes.
  * @returns {object} A virtual DOM node.
  */
-export function h(tag, props, children) {
+export function h(tag, props, children = []) {
     const key = props ? props.key : undefined;
-    // The key should not be set as a DOM attribute
     if (props && props.key) {
         delete props.key;
     }
-    return { tag, props, children, key };
+
+    // Flatten children, filter out nulls, and wrap raw text/number children
+    const processedChildren = children
+        .flat()
+        .filter(child => child != null)
+        .map(child => {
+            if (typeof child === 'string' || typeof child === 'number') {
+                return {
+                    tag: 'TEXT_NODE',
+                    props: {},
+                    children: [child.toString()],
+                    key: null, // Text nodes don't have keys
+                };
+            }
+            return child;
+        });
+
+    return { tag, props, children: processedChildren, key };
 }
 
 /**
@@ -20,12 +36,14 @@ export function h(tag, props, children) {
  * @returns {HTMLElement|Text} The created DOM element.
  */
 export function createElement(vnode) {
-    if (typeof vnode === 'string' || typeof vnode === 'number') {
-        return document.createTextNode(vnode.toString());
+    if (vnode.tag === 'TEXT_NODE') {
+        const el = document.createTextNode(vnode.children[0]);
+        vnode.el = el; // Cache the real DOM element for text nodes
+        return el;
     }
 
     const el = document.createElement(vnode.tag);
-    vnode.el = el; // Cache the real DOM element
+    vnode.el = el; // Cache the real DOM element for element nodes
 
     // Set properties/attributes and add event listeners
     updateProps(el, vnode.props);
@@ -53,16 +71,18 @@ export function updateElement(parent, newNode, oldNode) {
         return;
     }
 
-    // Cache the element from the old node
+    // If we reach here, nodes are not "changed".
+    // We cache the element from the old node. This is safe now because all nodes (incl. text) are objects.
     newNode.el = oldNode.el;
 
-    // 2. If nodes are the same, update props and diff children
-    if (newNode.tag) {
-        updateProps(newNode.el, newNode.props, oldNode.props);
-        // Note: We recursively call updateKeyedChildren, not a general purpose updateElement
-        // because the children are always lists that should be keyed.
-        updateKeyedChildren(newNode.el, newNode.children, oldNode.children);
+    // If the node is a text node, and it hasn't changed, there's nothing more to do.
+    if (newNode.tag === 'TEXT_NODE') {
+        return;
     }
+
+    // 2. If nodes are the same VDOM objects, update props and diff children
+    updateProps(newNode.el, newNode.props, oldNode.props);
+    updateKeyedChildren(newNode.el, newNode.children, oldNode.children);
 }
 
 
@@ -73,13 +93,19 @@ export function updateElement(parent, newNode, oldNode) {
  * @returns {boolean} True if the nodes are different.
  */
 function changed(node1, node2) {
-    // Different types (e.g., string vs. object)
-    if (typeof node1 !== typeof node2) return true;
-    // Different text content
-    if ((typeof node1 === 'string' || typeof node1 === 'number') && node1 !== node2) return true;
-    // Different tags
+    // If one is a text node and the other is not, they've changed.
+    if (node1.tag === 'TEXT_NODE' && node2.tag !== 'TEXT_NODE') return true;
+    if (node1.tag !== 'TEXT_NODE' && node2.tag === 'TEXT_NODE') return true;
+
+    // If both are text nodes, compare their content.
+    if (node1.tag === 'TEXT_NODE' && node2.tag === 'TEXT_NODE') {
+        return node1.children[0] !== node2.children[0];
+    }
+
+    // Different tags for element nodes
     if (node1.tag !== node2.tag) return true;
-    // One has a key and the other doesn't, or keys are different
+
+    // Different keys
     if (node1.key !== node2.key) return true;
 
     return false;
