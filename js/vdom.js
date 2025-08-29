@@ -11,18 +11,21 @@ export function h(tag, props, children) {
         delete props.key;
     }
 
-    // Wrap raw text/number children in a special VNode
-    const processedChildren = children.map(child => {
-        if (typeof child === 'string' || typeof child === 'number') {
-            return {
-                tag: 'TEXT_NODE',
-                props: {},
-                children: [child.toString()],
-                key: null, // Text nodes don't have keys
-            };
-        }
-        return child;
-    });
+    // Flatten children, filter out nulls, and wrap raw text/number children
+    const processedChildren = children
+        .flat()
+        .filter(child => child != null)
+        .map(child => {
+            if (typeof child === 'string' || typeof child === 'number') {
+                return {
+                    tag: 'TEXT_NODE',
+                    props: {},
+                    children: [child.toString()],
+                    key: null, // Text nodes don't have keys
+                };
+            }
+            return child;
+        });
 
     return { tag, props, children: processedChildren, key };
 }
