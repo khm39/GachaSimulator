@@ -1,5 +1,5 @@
 import { h } from '../vdom.js';
-import { Input, InputGroup, Select } from './uiPrimitives.js';
+import { Input, InputGroup, Select } from '../components/uiPrimitives.js';
 
 /**
  * Renders the settings form for the "Custom" game type.

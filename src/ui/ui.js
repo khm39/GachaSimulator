@@ -1,6 +1,6 @@
 import { h } from './vdom.js';
-import { Controls } from './components/Controls.js';
-import { Results } from './components/Results.js';
+import { Controls } from './Controls.js';
+import { Results } from './Results.js';
 
 /**
  * Renders the entire application UI as a VDOM tree.
