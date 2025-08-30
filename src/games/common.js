@@ -65,7 +65,11 @@ export function unifiedDraw(state, config) {
         let isPu = false;
 
         // Determine if it's a Pick-Up
-        if (config.fiftyFifty) {
+        if (isHardPity) {
+            isPu = true;
+            // A hard pity pull is the ultimate guarantee, so it consumes any 50/50 guarantee state.
+            state.isGuaranteedPu = false;
+        } else if (config.fiftyFifty) {
             if (state.isGuaranteedPu || Math.random() < 0.5) {
                 isPu = true;
                 state.isGuaranteedPu = false;
