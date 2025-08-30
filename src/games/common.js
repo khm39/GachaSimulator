@@ -84,6 +84,9 @@ export function unifiedDraw(state, config) {
             isPu = true; // Default to PU if no system is defined
         }
 
+        // SSR is obtained, so reset pity.
+        state.pityCount = 0;
+
         return { rarity: 'SSR', isPu, guaranteed: isHardPity };
 
     } else if (rand < currentSsrRate + config.srRate) {
