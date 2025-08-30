@@ -24,6 +24,9 @@ export function CustomSettings({ state, actions }) {
         InputGroup({ id: 'custom-ssr-rate', label: 'SSR確率 (%):' }, [
             Input({ type: 'number', id: 'custom-ssr-rate', name: 'customSsrRate', value: state.customSsrRate, step: 0.1, onchange: actions.updateCustomSetting })
         ]),
+        InputGroup({ id: 'custom-pu-rate', label: 'PU確率 (%):' }, [
+            Input({ type: 'number', id: 'custom-pu-rate', name: 'customPuRate', value: state.customPuRate, step: 0.1, onchange: actions.updateCustomSetting })
+        ]),
         InputGroup({ id: 'custom-sr-rate', label: 'SR確率 (%):' }, [
             Input({ type: 'number', id: 'custom-sr-rate', name: 'customSrRate', value: state.customSrRate, step: 0.1, onchange: actions.updateCustomSetting })
         ]),
