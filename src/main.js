@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
             customSsrRate: state.customSsrRate || 3,
             customPuRate: state.customPuRate || 50,
             customSrRate: state.customSrRate || 15,
-            customPityType: state.customPityType || 'exchange',
             customPityCount: state.customPityCount || 200,
         };
 
@@ -86,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
             state.config.ssrRate = state.customSsrRate / 100;
             state.config.puRate = state.customPuRate / 100;
             state.config.srRate = state.customSrRate / 100;
-            state.config.pityType = state.customPityType;
             state.config.pity = state.customPityCount;
         }
 
