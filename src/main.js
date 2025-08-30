@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             customSrRate: state.customSrRate || 15,
             customPityType: state.customPityType || 'exchange',
             customPityCount: state.customPityCount || 200,
+            customPuRate: state.customPuRate || 50,
         };
 
         // Create a fresh state for a new simulation
@@ -86,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.config.srRate = state.customSrRate / 100;
             state.config.pityType = state.customPityType;
             state.config.pity = state.customPityCount;
+            state.config.puRate = state.customPuRate / 100;
         }
 
         render();
