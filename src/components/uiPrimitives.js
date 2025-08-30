@@ -1,6 +1,6 @@
 import { h } from '../vdom.js';
 
-export const Col = (props, children) => h('div', { ...props, class: (`col-lg-${props.size} mb-4 ` + (props.class || '')).trim() }, children);
+export const Col = (props, children) => h('div', { ...props, class: (`col-md-${props.size} mb-4 ` + (props.class || '')).trim() }, children);
 export const Card = (props, children) => h('div', { ...props, class: ('card ' + (props.class || '')).trim() }, children);
 export const CardHeader = (props, children) => h('div', { ...props, class: ('card-header ' + (props.class || '')).trim() }, children);
 export const CardBody = (props, children) => h('div', { ...props, class: ('card-body ' + (props.class || '')).trim() }, children);

@@ -10,7 +10,7 @@ import { Card, CardBody } from './uiPrimitives.js';
  * @param {Array} children - The content to display inside the collapsible body.
  * @returns {object} A VDOM node.
  */
-export function CollapsibleCard({ id, title, children }) {
+export function CollapsibleCard({ id, title }, children) {
     const collapseId = `${id}-collapse`;
 
     return Card({ class: 'mb-3' }, [ // Add margin bottom for spacing
