@@ -2,7 +2,6 @@ import { unifiedDraw } from './common.js';
 
 export const game_b = {
     id: 'game_b',
-    name: '元素反応バトル',
     ssrRate: 0.006,
     srRate: 0.051,
     pity: 90,

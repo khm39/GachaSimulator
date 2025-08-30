@@ -2,7 +2,6 @@ import { unifiedDraw } from './common.js';
 
 export const game_d = {
     id: 'game_d',
-    name: '学園戦術',
     ssrRate: 0.025,
     srRate: 0.18,
     pity: 0, // No hard pity
