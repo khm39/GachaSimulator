@@ -2,6 +2,14 @@ import { h } from './vdom.js';
 import { Controls } from './Controls.js';
 import { Results } from './Results.js';
 
+const AppHeader = () => h('header', { class: 'pb-3 mb-4 border-bottom' }, [
+    h('h1', { class: 'fs-4' }, ['ガチャシミュレーター'])
+]);
+
+const AppFooter = () => h('footer', { class: 'pt-3 mt-4 text-muted border-top' }, [
+    h('p', { class: 'small' }, ['このシミュレーターは、公開されている確率に基づいていますが、あくまでシミュレーションであり、実際の結果を保証するものではありません。また、確率の正確性についても責任を負いません。'])
+]);
+
 /**
  * Renders the entire application UI as a VDOM tree.
  * @param {object} state The current application state.
@@ -16,17 +24,13 @@ export function renderApp(state, actions, allGames) {
     }
 
     return h('div', { class: 'container py-4' }, [
-        h('header', { class: 'pb-3 mb-4 border-bottom' }, [
-            h('h1', { class: 'fs-4' }, ['ガチャシミュレーター'])
-        ]),
+        AppHeader(),
         h('main', {}, [
             h('div', { class: 'row' }, [
                 Controls({ state, actions, allGames }),
                 Results({ state }),
             ])
         ]),
-        h('footer', { class: 'pt-3 mt-4 text-muted border-top' }, [
-            h('p', { class: 'small' }, ['このシミュレーターは、公開されている確率に基づいていますが、あくまでシミュレーションであり、実際の結果を保証するものではありません。また、確率の正確性についても責任を負いません。'])
-        ])
+        AppFooter()
     ]);
 }
