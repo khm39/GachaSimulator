@@ -1,4 +1,4 @@
-import { h } from './vdom.js';
+import { h } from '../vdom.js';
 import { Controls } from './Controls.js';
 import { Results } from './Results.js';
 
