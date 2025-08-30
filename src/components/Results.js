@@ -1,5 +1,14 @@
 import { h } from '../vdom.js';
-import { Col, Card, CardHeader, CardBody } from './uiPrimitives.js';
+import { Col, Card, CardBody } from './uiPrimitives.js';
+
+const ResultsHeader = () => h('div', {
+    class: 'card-header',
+    'data-bs-toggle': 'collapse',
+    'data-bs-target': '#results-collapse',
+    'aria-expanded': 'true',
+    'aria-controls': 'results-collapse'
+}, ['結果']);
+
 
 function renderResultCard(result) {
     const { id, rarity, isPu, guaranteed } = result;
@@ -19,43 +28,42 @@ function renderResultCard(result) {
     ]);
 }
 
+const ResultBatch = ({ resultBatch, batchIndex, totalBatches }) => {
+    const isSinglePull = resultBatch.length === 1;
+    const pullType = isSinglePull ? '単発' : `${resultBatch.length}連`;
+    const pullNumber = totalBatches - batchIndex;
+    const isLatest = batchIndex === 0;
+    const title = `${pullType}ガチャ (${pullNumber}回目)${isLatest ? ' (最新)' : ''}`;
+
+    return h('div', { class: 'result-batch mb-4' }, [
+        h('h4', { class: 'fs-6 fw-bold text-muted border-bottom pb-2 mb-3' }, [title]),
+        h('div', {
+            class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3'
+        },
+            resultBatch.map(renderResultCard)
+        )
+    ]);
+};
+
+
 /**
  * Renders the results display panel.
  * @param {object} state The application state.
  * @returns {object} A VDOM node.
  */
 export function Results({ state }) {
-    // The results container is now a Card to match the Status panel
     return Col({ size: 8 }, [
         Card({}, [
-            h('div', {
-                class: 'card-header',
-                'data-bs-toggle': 'collapse',
-                'data-bs-target': '#results-collapse',
-                'aria-expanded': 'true',
-                'aria-controls': 'results-collapse'
-            }, ['結果']),
+            ResultsHeader(),
             h('div', { id: 'results-collapse', class: 'collapse show' }, [
                 CardBody({},
-                    // We map over the reversed array of result *batches*
-                    [...state.results].reverse().map((resultBatch, index) => {
-                        const isSinglePull = resultBatch.length === 1;
-                        const pullType = isSinglePull ? '単発' : `${resultBatch.length}連`;
-                        const totalPulls = state.results.length;
-                        const pullNumber = totalPulls - index;
-                        const isLatest = index === 0;
-                        const title = `${pullType}ガチャ (${pullNumber}回目)${isLatest ? ' (最新)' : ''}`;
-
-                        // Each batch is rendered in its own container
-                        return h('div', { class: 'result-batch mb-4' }, [
-                            h('h4', { class: 'fs-6 fw-bold text-muted border-bottom pb-2 mb-3' }, [title]),
-                            h('div', {
-                                class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3'
-                            },
-                                resultBatch.map(renderResultCard)
-                            )
-                        ]);
-                    })
+                    [...state.results].reverse().map((batch, index) =>
+                        ResultBatch({
+                            resultBatch: batch,
+                            batchIndex: index,
+                            totalBatches: state.results.length
+                        })
+                    )
                 )
             ])
         ])
