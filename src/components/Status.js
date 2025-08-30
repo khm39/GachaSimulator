@@ -54,9 +54,11 @@ export function Status({ state }) {
     // --- Cumulative Stats ---
     const statItems = [];
     if (totalDraws > 0) {
-        const ssrCount = results.filter(r => r.rarity === 'SSR').length;
-        const srCount = results.filter(r => r.rarity === 'SR').length;
-        const puCount = results.filter(r => r.isPu).length;
+        // Flatten the array of result batches into a single array of results
+        const allResults = results.flat();
+        const ssrCount = allResults.filter(r => r.rarity === 'SSR').length;
+        const srCount = allResults.filter(r => r.rarity === 'SR').length;
+        const puCount = allResults.filter(r => r.isPu).length;
 
         statItems.push(h('li', { key: 'ssr-stat', class: 'list-group-item' }, [`SSR: ${ssrCount}枚 (${formatPercent(ssrCount / totalDraws)})`]));
         if (puCount > 0) {
