@@ -62,8 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const customSettings = {
             customSsrRate: state.customSsrRate || 3,
             customSrRate: state.customSrRate || 15,
-            customPityType: state.customPityType || 'exchange',
-            customPityCount: state.customPityCount || 200,
+            customPityType: state.customPityType || 'none',
+            customPityCount: state.customPityCount || 0,
             customPuRate: state.customPuRate || 50,
         };
 
