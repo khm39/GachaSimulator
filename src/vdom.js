@@ -106,9 +106,7 @@ function changed(node1, node2) {
     if (node1.tag !== node2.tag) return true;
 
     // Different keys
-    if (node1.key !== node2.key) return true;
-
-    return false;
+    return node1.key !== node2.key;
 }
 
 /**
@@ -239,29 +237,4 @@ function createKeyToOldIdx(children, beginIdx, endIdx) {
         }
     }
     return map;
-}
-
-
-// --- The legacy `updateChildren` is replaced by `updateKeyedChildren` ---
-// --- We need to export a primary diffing function. Let's call it `updateElement` ---
-
-/**
- * Main entry point for patching the DOM.
- * This function is designed to be called by the application's view layer.
- * @param {HTMLElement} parent The parent DOM element.
- * @param {Array<object|string>} newChildren The new children vnodes.
- * @param {Array<object|string>} oldChildren The old children vnodes.
- */
-export function updateChildren(parent, newChildren, oldChildren) {
-    if (!oldChildren || oldChildren.length === 0) {
-        parent.innerHTML = '';
-        for(const child of newChildren) {
-            parent.appendChild(createElement(child));
-        }
-    } else if (!newChildren || newChildren.length === 0) {
-        parent.innerHTML = '';
-    }
-    else {
-        updateKeyedChildren(parent, newChildren, oldChildren);
-    }
 }

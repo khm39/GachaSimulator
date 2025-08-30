@@ -15,18 +15,6 @@ export const assert = {
         if (value !== true) {
             throw new Error(message || `Assertion failed: expected true, but got ${value}`);
         }
-    },
-
-    throws(fn, message) {
-        let caught = false;
-        try {
-            fn();
-        } catch (e) {
-            caught = true;
-        }
-        if (!caught) {
-            throw new Error(message || 'Assertion failed: function did not throw');
-        }
     }
 };
 

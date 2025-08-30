@@ -1,5 +1,5 @@
-import { renderApp } from './ui/ui.js';
-import { updateElement, createElement } from './vdom.js';
+import {renderApp} from './ui/ui.js';
+import {createElement, updateElement} from './vdom.js';
 import * as gameService from './gameService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -26,8 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         updateCustomSetting: (e) => {
             const { name, value, type } = e.target;
-            const parsedValue = type === 'number' ? parseFloat(value) : value;
-            state[name] = parsedValue;
+            state[name] = type === 'number' ? parseFloat(value) : value;
 
             // If we are currently on the custom game, re-initialize to apply the new config
             if (state.game === 'custom') {

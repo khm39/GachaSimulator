@@ -1,4 +1,3 @@
-import { h } from '../vdom.js';
 import { calculateCurrentSsrRate } from '../games/common.js';
 import { InfoList } from '../components/InfoList.js';
 import { CollapsibleCard } from '../components/CollapsibleCard.js';
@@ -8,9 +7,6 @@ const formatPercent = (n) => `${(n * 100).toFixed(2)}%`;
 function getGachaInfoData(config) {
     const data = [];
     data.push(`基礎SSR確率: ${formatPercent(config.ssrRate)}`);
-    if (config.puSsrRate) {
-        data.push(`PU SSR確率: ${formatPercent(config.puSsrRate)}`);
-    }
     data.push(`SR確率: ${formatPercent(config.srRate)}`);
     if (config.has10PullGuarantee) {
         data.push('10連保証: SR以上1枚確定');
@@ -37,8 +33,7 @@ function getLiveStatusData(state) {
         }
     }
     if (config.pityType === 'exchange' && config.pity > 0) {
-        const pointName = config.pointName || '交換Pt';
-        data.push(`${pointName}: ${exchangePoints} / ${config.pity}`);
+        data.push(`交換Pt: ${exchangePoints} / ${config.pity}`);
     }
     if (game === 'game_b') {
         data.push(`次回PU確定: ${isGuaranteedPu ? 'はい' : 'いいえ'}`);
