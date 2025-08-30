@@ -1,4 +1,4 @@
-import { h, createElement, updateElement } from '../src/js/vdom.js';
+import { h, createElement, updateElement } from '../src/vdom.js';
 import { assert, test } from './assert.js';
 
 // --- Test Suite for h() ---
