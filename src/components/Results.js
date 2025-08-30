@@ -36,15 +36,23 @@ export function Results({ state }) {
                 'aria-controls': 'results-collapse'
             }, ['結果']),
             h('div', { id: 'results-collapse', class: 'collapse show' }, [
-                CardBody({}, [
-                    h('div', {
-                        id: 'results-display',
-                        // The row/col classes are for the grid of result items, padding is handled by card-body
-                        class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3'
-                    },
-                        [...state.results].reverse().map(renderResultCard)
-                    )
-                ])
+                CardBody({},
+                    // We map over the reversed array of result *batches*
+                    [...state.results].reverse().map((resultBatch, index) => {
+                        const isSinglePull = resultBatch.length === 1;
+                        const pullType = isSinglePull ? '単発' : `${resultBatch.length}連`;
+
+                        // Each batch is rendered in its own container
+                        return h('div', { class: 'result-batch mb-4' }, [
+                            h('h4', { class: 'fs-6 fw-bold text-muted border-bottom pb-2 mb-3' }, [`${pullType}ガチャ (最新)`]),
+                            h('div', {
+                                class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3'
+                            },
+                                resultBatch.map(renderResultCard)
+                            )
+                        ]);
+                    })
+                )
             ])
         ])
     ]);
