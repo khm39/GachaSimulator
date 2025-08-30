@@ -25,5 +25,8 @@ export function renderApp(state, actions, allGames) {
                 Results({ state }),
             ])
         ]),
+        h('footer', { class: 'pt-3 mt-4 text-muted border-top' }, [
+            h('p', { class: 'small' }, ['このシミュレーターは、公開されている確率に基づいていますが、あくまでシミュレーションであり、実際の結果を保証するものではありません。また、確率の正確性についても責任を負いません。'])
+        ])
     ]);
 }
