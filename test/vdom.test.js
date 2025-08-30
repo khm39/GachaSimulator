@@ -45,19 +45,13 @@ test('h() should correctly assign a key', () => {
 test('createElement() should create a simple DOM element', () => {
     const vnode = h('div', { id: 'test' }, ['Hello World']);
     const el = createElement(vnode);
-
-    assert.equal(el.tagName, 'DIV', 'Should create an element with the correct tag');
-    assert.equal(el.id, 'test', 'Should set attributes correctly');
-    assert.equal(el.textContent, 'Hello World', 'Should create text nodes correctly');
+    assert.equal(el.outerHTML, '<div id="test">Hello World</div>');
 });
 
 test('createElement() should create nested DOM elements', () => {
     const vnode = h('div', {}, [h('span', {}, ['Nested'])]);
     const el = createElement(vnode);
-
-    assert.equal(el.children.length, 1, 'Should create child elements');
-    assert.equal(el.children[0].tagName, 'SPAN', 'Child element should have the correct tag');
-    assert.equal(el.children[0].textContent, 'Nested', 'Child element should have correct content');
+    assert.equal(el.outerHTML, '<div><span>Nested</span></div>');
 });
 
 test('createElement() should handle text nodes correctly', () => {
@@ -85,21 +79,17 @@ test('updateElement() should replace a node if tags are different', () => {
 
     updateElement(container, newVNode, oldVNode);
 
-    assert.equal(container.children.length, 1, 'Container should have one child');
-    assert.equal(container.children[0].tagName, 'SPAN', 'New node should be a SPAN');
-    assert.equal(container.children[0].textContent, 'New', 'New node should have new content');
+    assert.equal(container.innerHTML, '<span>New</span>', 'Node should be replaced with a span');
 });
 
 test('updateElement() should update props on the same node', () => {
     const oldVNode = h('div', { key: 'a', id: 'old-id', class: 'c1' });
     const newVNode = h('div', { key: 'a', id: 'new-id', 'data-foo': 'bar' });
-    const { container, el } = setupTestDOM(oldVNode);
+    const { container } = setupTestDOM(oldVNode);
 
     updateElement(container, newVNode, oldVNode);
 
-    assert.equal(el.id, 'new-id', 'Should update changed properties');
-    assert.equal(el.hasAttribute('class'), false, 'Should remove old properties');
-    assert.equal(el.getAttribute('data-foo'), 'bar', 'Should add new properties');
+    assert.equal(container.innerHTML, '<div id="new-id" data-foo="bar"></div>');
 });
 
 test('updateElement() should update text content of a text node', () => {
@@ -109,7 +99,7 @@ test('updateElement() should update text content of a text node', () => {
 
     updateElement(container, newVNode, oldVNode);
 
-    assert.equal(container.children[0].textContent, 'New text', 'Text content should be updated');
+    assert.equal(container.innerHTML, '<p>New text</p>');
 });
 
 test('updateElement() should add new child nodes (append)', () => {
@@ -124,8 +114,7 @@ test('updateElement() should add new child nodes (append)', () => {
 
     updateElement(container, newVNode, oldVNode);
 
-    assert.equal(container.children[0].children.length, 2, 'Should have two children now');
-    assert.equal(container.children[0].children[1].textContent, 'B', 'The new child should be "B"');
+    assert.equal(container.innerHTML, '<div><p>A</p><p>B</p></div>');
 });
 
 test('updateElement() should remove old child nodes (from end)', () => {
@@ -140,8 +129,7 @@ test('updateElement() should remove old child nodes (from end)', () => {
 
     updateElement(container, newVNode, oldVNode);
 
-    assert.equal(container.children[0].children.length, 1, 'Should have one child now');
-    assert.equal(container.children[0].children[0].textContent, 'A', 'The remaining child should be "A"');
+    assert.equal(container.innerHTML, '<div><p>A</p></div>');
 });
 
 test('updateElement() should reorder child nodes', () => {
@@ -159,9 +147,5 @@ test('updateElement() should reorder child nodes', () => {
 
     updateElement(container, newVNode, oldVNode);
 
-    const children = container.children[0].children;
-    assert.equal(children.length, 3, 'Should still have three children');
-    assert.equal(children[0].textContent, 'C', 'First child should be C');
-    assert.equal(children[1].textContent, 'A', 'Second child should be A');
-    assert.equal(children[2].textContent, 'B', 'Third child should be B');
+    assert.equal(container.innerHTML, '<div><p>C</p><p>A</p><p>B</p></div>');
 });
