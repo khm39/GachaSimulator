@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        state.results.push(...currentResults);
+        state.results.push(currentResults);
         render(); // Re-render the app with the new state
     }
 
