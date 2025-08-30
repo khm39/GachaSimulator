@@ -1,4 +1,4 @@
-import { renderApp } from './ui.js';
+import { renderApp } from './ui/ui.js';
 import { updateElement, createElement } from './vdom.js';
 import * as gameService from './gameService.js';
 
