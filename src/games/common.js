@@ -29,7 +29,7 @@ export function calculateCurrentSsrRate(state, config) {
         }
     }
 
-     // Hard Pity (highest priority)
+     // Hard Pity (the highest priority)
     if (config.pity > 0 && state.pityCount >= config.pity) {
         currentSsrRate = 1.0;
     }
@@ -45,14 +45,11 @@ export function calculateCurrentSsrRate(state, config) {
  * - Hard pity
  * - Rate-up steps (`rateSteps`)
  * - Programmatic soft pity (`softPity`)
- * - Pick-up rate guarantees (e.g. 50/50) via `puRate`
+ * - Pick-up rate guarantees (e.g., 50/50) via `puRate`
  */
 export function unifiedDraw(state, config) {
     // --- State Updates ---
     state.pityCount++;
-    if (config.hasExchangePoints) {
-        state.exchangePoints++;
-    }
 
     // --- Rate Calculation ---
     const currentSsrRate = calculateCurrentSsrRate(state, config);
@@ -62,15 +59,13 @@ export function unifiedDraw(state, config) {
     const rand = Math.random();
     if (rand < currentSsrRate) {
         // --- SSR Result ---
-        let isPu = false;
+        let isPu;
 
         // Determine if it's a Pick-Up
         if (isHardPity) {
             isPu = true;
             // A hard pity pull is the ultimate guarantee, so it consumes any 50/50 guarantee state.
             state.isGuaranteedPu = false;
-        } else if (config.puRateIsAbsolute) {
-            isPu = rand < config.puSsrRate;
         } else if (config.puRate) {
             // puRate can be used for 50/50 style guarantees.
             // If puRate is 0.5, it's a 50/50. If it's 0.7, it's a 70/30.
@@ -87,11 +82,6 @@ export function unifiedDraw(state, config) {
             }
         } else {
             isPu = true; // Default to PU if no system is defined
-        }
-
-        // Reset pity counter if configured to do so
-        if (config.pityResetsOnRandom !== false) {
-             state.pityCount = 0;
         }
 
         return { rarity: 'SSR', isPu, guaranteed: isHardPity };

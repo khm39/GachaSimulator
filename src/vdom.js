@@ -106,9 +106,7 @@ function changed(node1, node2) {
     if (node1.tag !== node2.tag) return true;
 
     // Different keys
-    if (node1.key !== node2.key) return true;
-
-    return false;
+    return node1.key !== node2.key;
 }
 
 /**
@@ -176,20 +174,20 @@ function updateKeyedChildren(parentEl, newChildren, oldChildren) {
             oldStartVnode = oldChildren[++oldStartIdx];
         } else if (oldEndVnode == null) {
             oldEndVnode = oldChildren[--oldEndIdx];
-        } else if (newStartVnode.key === oldStartVnode.key) { // Match at the start
+        } else if (newStartVnode.key != null && newStartVnode.key === oldStartVnode.key) { // Match at the start
             updateElement(parentEl, newStartVnode, oldStartVnode);
             oldStartVnode = oldChildren[++oldStartIdx];
             newStartVnode = newChildren[++newStartIdx];
-        } else if (newEndVnode.key === oldEndVnode.key) { // Match at the end
+        } else if (newEndVnode.key != null && newEndVnode.key === oldEndVnode.key) { // Match at the end
             updateElement(parentEl, newEndVnode, oldEndVnode);
             oldEndVnode = oldChildren[--oldEndIdx];
             newEndVnode = newChildren[--newEndIdx];
-        } else if (newEndVnode.key === oldStartVnode.key) { // New end matches old start (move to end)
+        } else if (newEndVnode.key != null && newEndVnode.key === oldStartVnode.key) { // New end matches old start (move to end)
              updateElement(parentEl, newEndVnode, oldStartVnode);
              parentEl.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling);
              oldStartVnode = oldChildren[++oldStartIdx];
              newEndVnode = newChildren[--newEndIdx];
-        } else if (newStartVnode.key === oldEndVnode.key) { // New start matches old end (move to start)
+        } else if (newStartVnode.key != null && newStartVnode.key === oldEndVnode.key) { // New start matches old end (move to start)
             updateElement(parentEl, newStartVnode, oldEndVnode);
             parentEl.insertBefore(oldEndVnode.el, oldStartVnode.el);
             oldEndVnode = oldChildren[--oldEndIdx];
@@ -239,29 +237,4 @@ function createKeyToOldIdx(children, beginIdx, endIdx) {
         }
     }
     return map;
-}
-
-
-// --- The legacy `updateChildren` is replaced by `updateKeyedChildren` ---
-// --- We need to export a primary diffing function. Let's call it `updateElement` ---
-
-/**
- * Main entry point for patching the DOM.
- * This function is designed to be called by the application's view layer.
- * @param {HTMLElement} parent The parent DOM element.
- * @param {Array<object|string>} newChildren The new children vnodes.
- * @param {Array<object|string>} oldChildren The old children vnodes.
- */
-export function updateChildren(parent, newChildren, oldChildren) {
-    if (!oldChildren || oldChildren.length === 0) {
-        parent.innerHTML = '';
-        for(const child of newChildren) {
-            parent.appendChild(createElement(child));
-        }
-    } else if (!newChildren || newChildren.length === 0) {
-        parent.innerHTML = '';
-    }
-    else {
-        updateKeyedChildren(parent, newChildren, oldChildren);
-    }
 }
