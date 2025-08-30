@@ -45,7 +45,7 @@ export function calculateCurrentSsrRate(state, config) {
  * - Hard pity
  * - Rate-up steps (`rateSteps`)
  * - Programmatic soft pity (`softPity`)
- * - 50/50 guarantee system (`fiftyFifty`)
+ * - Pick-up rate guarantees (e.g. 50/50) via `puRate`
  */
 export function unifiedDraw(state, config) {
     // --- State Updates ---
@@ -69,18 +69,22 @@ export function unifiedDraw(state, config) {
             isPu = true;
             // A hard pity pull is the ultimate guarantee, so it consumes any 50/50 guarantee state.
             state.isGuaranteedPu = false;
-        } else if (config.fiftyFifty) {
-            if (state.isGuaranteedPu || Math.random() < 0.5) {
+        } else if (config.puRateIsAbsolute) {
+            isPu = rand < config.puSsrRate;
+        } else if (config.puRate) {
+            // puRate can be used for 50/50 style guarantees.
+            // If puRate is 0.5, it's a 50/50. If it's 0.7, it's a 70/30.
+            // A guarantee is only used if the puRate is less than 1.0 (100%)
+            if (state.isGuaranteedPu || Math.random() < config.puRate) {
                 isPu = true;
                 state.isGuaranteedPu = false;
             } else {
                 isPu = false;
-                state.isGuaranteedPu = true;
+                // Only set the guarantee if the rate is not 100%
+                if (config.puRate < 1.0) {
+                    state.isGuaranteedPu = true;
+                }
             }
-        } else if (config.puRateIsAbsolute) {
-            isPu = rand < config.puSsrRate;
-        } else if (config.puRate) {
-            isPu = Math.random() < config.puRate;
         } else {
             isPu = true; // Default to PU if no system is defined
         }
