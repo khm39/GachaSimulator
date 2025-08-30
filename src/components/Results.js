@@ -41,10 +41,14 @@ export function Results({ state }) {
                     [...state.results].reverse().map((resultBatch, index) => {
                         const isSinglePull = resultBatch.length === 1;
                         const pullType = isSinglePull ? '単発' : `${resultBatch.length}連`;
+                        const totalPulls = state.results.length;
+                        const pullNumber = totalPulls - index;
+                        const isLatest = index === 0;
+                        const title = `${pullType}ガチャ (${pullNumber}回目)${isLatest ? ' (最新)' : ''}`;
 
                         // Each batch is rendered in its own container
                         return h('div', { class: 'result-batch mb-4' }, [
-                            h('h4', { class: 'fs-6 fw-bold text-muted border-bottom pb-2 mb-3' }, [`${pullType}ガチャ (最新)`]),
+                            h('h4', { class: 'fs-6 fw-bold text-muted border-bottom pb-2 mb-3' }, [title]),
                             h('div', {
                                 class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3'
                             },
