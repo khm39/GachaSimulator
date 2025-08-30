@@ -2,7 +2,6 @@ import { unifiedDraw } from './common.js';
 
 export const game_e = {
     id: 'game_e',
-    name: 'タワーディフェンス',
     ssrRate: 0.02,
     srRate: 0.08,
     pity: 0, // No hard pity for SSR draws

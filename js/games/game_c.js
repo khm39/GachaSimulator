@@ -2,7 +2,6 @@ import { unifiedDraw } from './common.js';
 
 export const game_c = {
     id: 'game_c',
-    name: '育成レース',
     ssrRate: 0.03,
     srRate: 0.18,
     pity: 0, // No hard pity

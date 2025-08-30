@@ -103,8 +103,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDraw(count) {
         if (!state.config) return;
 
+        let drawCount = count;
+        // Some games have a 10+1 pull system.
+        if (state.game === 'game_a' && count === 10) {
+            drawCount = 11;
+        }
+
         let currentResults = [];
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < drawCount; i++) {
             const result = drawOnce();
             result.id = state.nextResultId++;
             currentResults.push(result);

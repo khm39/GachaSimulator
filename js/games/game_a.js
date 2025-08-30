@@ -2,7 +2,6 @@ import { unifiedDraw } from './common.js';
 
 export const game_a = {
     id: 'game_a',
-    name: '運命の物語',
     ssrRate: 0.01,
     srRate: 0.03,
     pity: 330,

@@ -71,7 +71,8 @@ function renderControls(state, actions, allGames) {
 
     const gameOptions = allGames.map(g => ({
         value: g.id,
-        text: g.name,
+        // Generate a user-friendly name from the ID, e.g., "game_a" -> "Game A"
+        text: g.name || g.id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         selected: g.id === game,
     }));
 

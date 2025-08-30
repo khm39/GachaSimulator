@@ -2,7 +2,6 @@ import { unifiedDraw } from './common.js';
 
 export const custom = {
     id: 'custom',
-    name: 'カスタム',
     ssrRate: 0.03, // Default values
     srRate: 0.15,
     pity: 200, // Default for custom
