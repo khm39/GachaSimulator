@@ -9,7 +9,7 @@ export const game_g = {
     pityDesc: '90回で最高レアが確定。74回から確率上昇。すり抜けたら次回最高レアはPU確定。',
     has10PullGuarantee: true,
     // --- unifiedDraw config ---
-    fiftyFifty: true,
+    puRate: 0.5, // 50% chance for PU, with guarantee
     rateSteps: [
         { after: 74, ssrRate: 0.066 },
         { after: 75, ssrRate: 0.126 },

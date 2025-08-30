@@ -107,7 +107,7 @@ test('unifiedDraw: should return a non-PU SSR and set guarantee', () => {
     // First random for the main draw (SSR), second for the 50/50 (fail)
     withMockedRandom([0.005, 0.6], () => {
         const state = { pityCount: 0, isGuaranteedPu: false };
-        const config = { ssrRate: 0.01, srRate: 0.05, fiftyFifty: true };
+        const config = { ssrRate: 0.01, srRate: 0.05, puRate: 0.5 };
         const result = unifiedDraw(state, config);
         assert.deepEqual(result, { rarity: 'SSR', isPu: false, guaranteed: false });
         assert.isTrue(state.isGuaranteedPu, 'isGuaranteedPu should be true after losing 50/50');
@@ -119,7 +119,7 @@ test('unifiedDraw: should return a PU SSR when 50/50 is won', () => {
     // First random for main draw (SSR), second for 50/50 (win)
     withMockedRandom([0.005, 0.4], () => {
         const state = { pityCount: 0, isGuaranteedPu: false };
-        const config = { ssrRate: 0.01, srRate: 0.05, fiftyFifty: true };
+        const config = { ssrRate: 0.01, srRate: 0.05, puRate: 0.5 };
         const result = unifiedDraw(state, config);
         assert.deepEqual(result, { rarity: 'SSR', isPu: true, guaranteed: false });
         assert.isTrue(!state.isGuaranteedPu, 'isGuaranteedPu should be false after winning 50/50');
@@ -130,7 +130,7 @@ test('unifiedDraw: should return a guaranteed PU SSR', () => {
     // Only one random needed, since the 50/50 is guaranteed to be won
     withMockedRandom([0.005], () => {
         const state = { pityCount: 10, isGuaranteedPu: true };
-        const config = { ssrRate: 0.01, srRate: 0.05, fiftyFifty: true };
+        const config = { ssrRate: 0.01, srRate: 0.05, puRate: 0.5 };
         const result = unifiedDraw(state, config);
         assert.deepEqual(result, { rarity: 'SSR', isPu: true, guaranteed: false });
         assert.isTrue(!state.isGuaranteedPu, 'isGuaranteedPu should be reset after using the guarantee');
@@ -140,7 +140,7 @@ test('unifiedDraw: should return a guaranteed PU SSR', () => {
 test('unifiedDraw: should return a guaranteed SSR at hard pity', () => {
     withMockedRandom([0.99], () => { // This random value would normally be an 'R'
         const state = { pityCount: 89, isGuaranteedPu: false };
-        const config = { ssrRate: 0.01, srRate: 0.05, pity: 90, fiftyFifty: true };
+        const config = { ssrRate: 0.01, srRate: 0.05, pity: 90, puRate: 0.5 };
         // The draw will increment pityCount to 90, triggering hard pity
         const result = unifiedDraw(state, config);
         assert.deepEqual(result, { rarity: 'SSR', isPu: true, guaranteed: true });
