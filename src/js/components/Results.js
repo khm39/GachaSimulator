@@ -28,15 +28,23 @@ export function Results({ state }) {
     // The results container is now a Card to match the Status panel
     return Col({ size: 8 }, [
         Card({}, [
-            CardHeader({}, ['結果']),
-            CardBody({}, [
-                h('div', {
-                    id: 'results-display',
-                    // The row/col classes are for the grid of result items, padding is handled by card-body
-                    class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3'
-                },
-                    [...state.results].reverse().map(renderResultCard)
-                )
+            h('div', {
+                class: 'card-header',
+                'data-bs-toggle': 'collapse',
+                'data-bs-target': '#results-collapse',
+                'aria-expanded': 'true',
+                'aria-controls': 'results-collapse'
+            }, ['結果']),
+            h('div', { id: 'results-collapse', class: 'collapse show' }, [
+                CardBody({}, [
+                    h('div', {
+                        id: 'results-display',
+                        // The row/col classes are for the grid of result items, padding is handled by card-body
+                        class: 'row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3'
+                    },
+                        [...state.results].reverse().map(renderResultCard)
+                    )
+                ])
             ])
         ])
     ]);

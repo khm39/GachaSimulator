@@ -46,3 +46,7 @@ body {
 .result-card-wrapper {
     animation: pop-in 0.3s ease-out;
 }
+
+.card-header[data-bs-toggle="collapse"] {
+    cursor: pointer;
+}

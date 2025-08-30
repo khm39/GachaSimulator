@@ -68,14 +68,22 @@ export function Status({ state }) {
     }
 
     return Card({ class: 'mt-3' }, [
-        CardHeader({}, ['ステータス']),
-        h('ul', { class: 'list-group list-group-flush' }, [
-            h('li', { class: 'list-group-item list-group-item-secondary' }, [h('strong', {}, ['ガチャ仕様'])]),
-            ...infoItems,
-            h('li', { class: 'list-group-item list-group-item-secondary' }, [h('strong', {}, ['現在の状況'])]),
-            ...liveItems,
-            h('li', { class: 'list-group-item list-group-item-secondary' }, [h('strong', {}, ['累計結果'])]),
-            ...statItems
-        ]),
+        h('div', {
+            class: 'card-header',
+            'data-bs-toggle': 'collapse',
+            'data-bs-target': '#status-collapse',
+            'aria-expanded': 'true',
+            'aria-controls': 'status-collapse'
+        }, ['ステータス']),
+        h('div', { id: 'status-collapse', class: 'collapse show' }, [
+            h('ul', { class: 'list-group list-group-flush' }, [
+                h('li', { class: 'list-group-item list-group-item-secondary' }, [h('strong', {}, ['ガチャ仕様'])]),
+                ...infoItems,
+                h('li', { class: 'list-group-item list-group-item-secondary' }, [h('strong', {}, ['現在の状況'])]),
+                ...liveItems,
+                h('li', { class: 'list-group-item list-group-item-secondary' }, [h('strong', {}, ['累計結果'])]),
+                ...statItems
+            ]),
+        ])
     ]);
 }

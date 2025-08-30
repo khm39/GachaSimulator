@@ -22,20 +22,31 @@ export function Controls({ state, actions, allGames }) {
 
     return Col({ size: 4 }, [
         Card({}, [
-            CardHeader({}, ['シミュレーション設定']),
-            CardBody({}, [
-                h('div', { class: 'mb-3' }, [
-                    h('label', { for: 'game-select', class: 'form-label' }, ['ゲームを選択:']),
-                    Select({ id: 'game-select', name: 'game', options: gameOptions, onchange: actions.selectGame }),
+            // Collapsible Header
+            h('div', {
+                class: 'card-header',
+                'data-bs-toggle': 'collapse',
+                'data-bs-target': '#settings-collapse',
+                'aria-expanded': 'true',
+                'aria-controls': 'settings-collapse'
+            }, ['シミュレーション設定']),
+
+            // Collapsible Body
+            h('div', { id: 'settings-collapse', class: 'collapse show' }, [
+                CardBody({}, [
+                    h('div', { class: 'mb-3' }, [
+                        h('label', { for: 'game-select', class: 'form-label' }, ['ゲームを選択:']),
+                        Select({ id: 'game-select', name: 'game', options: gameOptions, onchange: actions.selectGame }),
+                    ]),
+                    // Use the CustomSettings component
+                    CustomSettings({ state, actions }),
+                    h('div', { class: 'd-grid gap-2 mb-3' }, [
+                        Button({ color: 'primary', text: '1回引く', onclick: actions.draw1 }),
+                        Button({ color: 'success', text: '10回引く', onclick: actions.draw10 }),
+                        Button({ color: 'danger', text: 'リセット', onclick: actions.reset }),
+                    ]),
                 ]),
-                // Use the CustomSettings component
-                CustomSettings({ state, actions }),
-                h('div', { class: 'd-grid gap-2 mb-3' }, [
-                    Button({ color: 'primary', text: '1回引く', onclick: actions.draw1 }),
-                    Button({ color: 'success', text: '10回引く', onclick: actions.draw10 }),
-                    Button({ color: 'danger', text: 'リセット', onclick: actions.reset }),
-                ]),
-            ]),
+            ])
         ]),
         // Use the Status component
         Status({ state }),
